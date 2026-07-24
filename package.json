@@ -12,6 +12,7 @@
     "@dnd-kit/react": "^0.5.0",
     "@react-router/node": "8.0.0",
     "@react-router/serve": "8.0.0",
+    "animejs": "^4.5.0",
     "isbot": "^5.1.36",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
