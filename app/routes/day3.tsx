@@ -23,7 +23,7 @@ const asset = (file: string) => encodeURI(`/day3/${file}`);
 
 // The 4 recessed compartments, top -> bottom, as % of the 9:16 stage.
 const SHELVES = [
-	{ top: 4, height: 16.75 },
+	{ top: 4.5, height: 16.75 },
 	{ top: 23.9, height: 10.4 },
 	{ top: 37.0, height: 19.6 },
 	{ top: 59.5, height: 34.9 },
