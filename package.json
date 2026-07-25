@@ -9,6 +9,7 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/react": "^0.5.0",
     "@react-router/node": "8.0.0",
     "@react-router/serve": "8.0.0",
@@ -16,7 +17,6 @@
     "isbot": "^5.1.36",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-draggable": "^4.7.0",
     "react-router": "8.0.0"
   },
   "devDependencies": {
