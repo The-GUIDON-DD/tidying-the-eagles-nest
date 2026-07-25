@@ -1,13 +1,9 @@
-interface FlapProps {
-  isOpen: boolean;
-}
-
-export default function Flap({ isOpen }: FlapProps) {
+export function Flap({ isOpen }: { isOpen: boolean }) {
   return (
     <div
-      className="grid place-items-center h-full"
+      className="grid place-items-center w-full"
       style={{
-        aspectRatio: "1072/417",
+        aspectRatio: "1072/495",
         gridTemplateColumns: "1fr",
         gridTemplateRows: "1fr",
       }}
@@ -33,6 +29,22 @@ export default function Flap({ isOpen }: FlapProps) {
         }}
         alt="Closed flap"
       />
+    </div>
+  );
+}
+
+export default function Envelope({ isOpen }: { isOpen: boolean }) {
+  return (
+    <div
+      className="w-full relative"
+      style={{
+        background: `center / contain no-repeat url("/envelope/envelope.svg")`,
+        aspectRatio: "1072/648",
+      }}
+    >
+      <div className="w-full absolute top-0">
+        <Flap isOpen={isOpen} />
+      </div>
     </div>
   );
 }
