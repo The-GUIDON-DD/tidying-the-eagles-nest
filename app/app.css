@@ -15,17 +15,29 @@ body {
 	}
 }
 
-/* day3 locker — grow an item slightly while it is held. dnd-kit clones the
-   dragged node into a top-layer popover flagged [data-dnd-dragging], so React
-   state only reaches the hidden original; CSS is what styles the visible clone.
-   The !important unclips the clone so the grow is not cropped by its hitbox. */
+/* day3 locker — grow + wiggle an item on grab. dnd-kit clones the dragged
+   node into a top-layer popover flagged [data-dnd-dragging], so React state
+   only reaches the hidden original; CSS is what styles the visible clone. */
 .day3-grow {
-	transition: transform 140ms ease-in-out;
 	transform-origin: center;
 }
-[data-dnd-dragging="true"] {
-	clip-path: none !important;
-}
 [data-dnd-dragging="true"] .day3-grow {
-	transform: scale(1.06); /* the grow amount — tune to taste */
+	animation: day3-grab 220ms ease-out forwards;
+}
+@keyframes day3-grab {
+	0% {
+		transform: scale(1) rotate(0deg);
+	}
+	25% {
+		transform: scale(1.08) rotate(-3deg);
+	}
+	50% {
+		transform: scale(1.08) rotate(3deg);
+	}
+	75% {
+		transform: scale(1.06) rotate(-1.5deg);
+	}
+	100% {
+		transform: scale(1.06) rotate(0deg); /* the grow amount — tune to taste */
+	}
 }

@@ -34,70 +34,70 @@ const ITEMS: Item[] = [
 	{
 		id: "towel",
 		src: "towel.png",
-		width: 17.5,
-		solved: { left: 22.2, top: 5.3 },
+		width: 14.88,
+		solved: { left: 23.51, top: 5.3 },
 	},
 	{
 		id: "clothes",
 		src: "clothes.png",
-		width: 44.5,
-		solved: { left: 36, top: 0.8 },
+		width: 41.83,
+		solved: { left: 37.56, top: 5.43 },
 	},
 	{
 		id: "sneaker-l",
 		src: "sneaker.png",
-		width: 37,
-		solved: { left: 22, top: 17.6 },
+		width: 32.19,
+		solved: { left: 24.04, top: 25.2 },
 	},
 	{
 		id: "sneaker-r",
 		src: "sneaker.png",
-		width: 37,
+		width: 32.19,
 		flipX: true,
 		flipY: true,
-		solved: { left: 43.3, top: 20.5 },
+		solved: { left: 46.07, top: 24.35 },
 	},
 	{
 		id: "bag",
 		src: "gym bag.png",
-		width: 56.5,
-		solved: { left: 23.2, top: 29.6 },
+		width: 55.37,
+		solved: { left: 23.48, top: 37.7 },
 	},
 	{
 		id: "mat",
 		src: "yoga mat.png",
-		width: 35,
-		solved: { left: 13.4, top: 57.5 },
+		width: 11.55,
+		solved: { left: 24.77, top: 59.27 },
 	},
 	{
 		id: "arnis",
 		src: "arnis stick.png",
-		width: 31,
-		solved: { left: 22.3, top: 59.8 },
+		width: 5.27,
+		solved: { left: 36.09, top: 59.97 },
 	},
 	{
 		id: "racket",
 		src: "tennis racket.png",
-		width: 32.5,
-		solved: { left: 45.9, top: 58.7 },
+		width: 25.35,
+		solved: { left: 48.99, top: 59.25 },
 	},
 	{
 		id: "barbell",
 		src: "barbell.png",
-		width: 34.4,
-		solved: { left: 29.5, top: 60.1 },
+		width: 11.01,
+		solved: { left: 41.02, top: 60.1 },
 	},
 	{
 		id: "jug",
 		src: "water jug.png",
-		width: 18.5,
-		solved: { left: 62.8, top: 74.6 },
+		width: 11.47,
+		solved: { left: 66.04, top: 75.33 },
 	},
 	{
 		id: "kettlebell",
 		src: "weights.png",
-		width: 27,
-		solved: { left: 37, top: 79.3 },
+		width: 18.9,
+		solved: { left: 40.91, top: 79.3 },
 	},
 ];
 
@@ -111,81 +111,30 @@ const REPEL_MAX = 1.4; // % cap on a single nudge step
 const SHUFFLE_TRIES = 40; // candidate spots tried per item when scattering
 const SHUFFLE_MAX_OVERLAP = 0.12; // accept a spot once overlap is under ~12%
 
-// Opaque bounding box per asset (fractions of the PNG), measured from alpha.
-// Clips each item's hit area to its visible pixels, so transparent margins let
-// clicks fall through to the item behind. Padded a touch to avoid cropping art.
-const CONTENT: Record<string, { l: number; r: number; t: number; b: number }> =
-	{
-		"towel.png": { l: 0.1, r: 0.9, t: 0.02, b: 0.96 },
-		"clothes.png": { l: 0.06, r: 0.95, t: 0.21, b: 0.79 },
-		"sneaker.png": { l: 0.08, r: 0.9, t: 0.39, b: 0.79 },
-		"gym bag.png": { l: 0.03, r: 0.96, t: 0.28, b: 0.82 },
-		"yoga mat.png": { l: 0.35, r: 0.63, t: 0.07, b: 0.93 },
-		"arnis stick.png": { l: 0.47, r: 0.59, t: 0.03, b: 0.97 },
-		"barbell.png": { l: 0.36, r: 0.63, t: 0.02, b: 0.98 },
-		"tennis racket.png": { l: 0.12, r: 0.85, t: 0.04, b: 0.96 },
-		"water jug.png": { l: 0.2, r: 0.77, t: 0.06, b: 0.93 },
-		"weights.png": { l: 0.17, r: 0.82, t: 0.02, b: 0.99 },
-	};
-
-// imgH / imgW per asset — used to compute an item's rendered height in stage %.
-const ASPECT: Record<string, number> = {
-	"towel.png": 1.625,
-	"clothes.png": 1,
-	"sneaker.png": 1,
-	"gym bag.png": 1,
-	"yoga mat.png": 2,
-	"arnis stick.png": 2,
-	"barbell.png": 1,
-	"tennis racket.png": 2,
-	"water jug.png": 2,
-	"weights.png": 1,
-};
-
-// Opaque box for an item, mirrored to match its flips (fractions of the image).
-function contentBox(item: Item) {
-	const c = CONTENT[item.src] ?? { l: 0, r: 1, t: 0, b: 1 };
-	let { l, r, t, b } = c;
-	if (item.flipX) [l, r] = [1 - r, 1 - l];
-	if (item.flipY) [t, b] = [1 - b, 1 - t];
-	return { l, r, t, b };
-}
-
-// A clip-path inset matching the opaque box (padded a touch so art isn't cropped).
-function contentClip(item: Item): string | undefined {
-	if (!CONTENT[item.src]) return undefined;
-	const { l, r, t, b } = contentBox(item);
-	const pad = 0.025;
-	const pct = (n: number) =>
-		`${(Math.min(1, Math.max(0, n)) * 100).toFixed(1)}%`;
-	return `inset(${pct(t - pad)} ${pct(1 - r - pad)} ${pct(1 - b - pad)} ${pct(l - pad)})`;
-}
-
-// The stage-% range that keeps an item's visible content inside the viewport.
-// Positions are stage-%, so we fold in the stage's on-screen offset (rect).
-function screenBounds(item: Item, width: number, rect: DOMRect) {
-	const { l, r, t, b } = contentBox(item);
-	const h = width * (ASPECT[item.src] ?? 1) * (9 / 16); // rendered height, stage %
+// The stage-% range that keeps an item inside the viewport (positions are
+// stage-%, so we fold in the stage's on-screen offset (rect)). `h` is the
+// item's actual rendered height, stage-%, read from the live DOM node.
+function screenBounds(width: number, h: number, rect: DOMRect) {
 	const vw = typeof window !== "undefined" ? window.innerWidth : rect.width;
 	const vh = typeof window !== "undefined" ? window.innerHeight : rect.height;
 	return {
-		minLeft: -l * width - (rect.left * 100) / rect.width,
-		maxLeft: ((vw - rect.left) * 100) / rect.width - r * width,
-		minTop: -t * h - (rect.top * 100) / rect.height,
-		maxTop: ((vh - rect.top) * 100) / rect.height - b * h,
+		minLeft: -(rect.left * 100) / rect.width,
+		maxLeft: ((vw - rect.left) * 100) / rect.width - width,
+		minTop: -(rect.top * 100) / rect.height,
+		maxTop: ((vh - rect.top) * 100) / rect.height - h,
 	};
 }
 
 // Keep an item's visible content within the SCREEN (not the stage) so it can be
 // dragged out into the side margins but never lost off the viewport edge.
 function clampToScreen(
-	item: Item,
 	left: number,
 	top: number,
 	width: number,
+	h: number,
 	rect: DOMRect,
 ): Pos {
-	const b = screenBounds(item, width, rect);
+	const b = screenBounds(width, h, rect);
 	return {
 		left: Math.min(b.maxLeft, Math.max(b.minLeft, left)),
 		top: Math.min(b.maxTop, Math.max(b.minTop, top)),
@@ -194,20 +143,19 @@ function clampToScreen(
 
 type Box = { x0: number; x1: number; y0: number; y1: number };
 
-// The item's visible-content rectangle in viewport pixels (for overlap tests).
+// The item's rectangle in viewport pixels (for overlap tests).
 function contentPxBox(
-	item: Item,
 	left: number,
 	top: number,
 	width: number,
+	h: number,
 	rect: DOMRect,
 ): Box {
-	const { l, r, t, b } = contentBox(item);
 	const pxW = (width / 100) * rect.width;
-	const pxH = pxW * (ASPECT[item.src] ?? 1);
+	const pxH = (h / 100) * rect.height;
 	const x = (left / 100) * rect.width;
 	const y = (top / 100) * rect.height;
-	return { x0: x + l * pxW, x1: x + r * pxW, y0: y + t * pxH, y1: y + b * pxH };
+	return { x0: x, x1: x + pxW, y0: y, y1: y + pxH };
 }
 
 // Overlap of two content boxes as a fraction of the smaller box's area.
@@ -229,18 +177,23 @@ function DraggableItem({
 	pos,
 	width,
 	dragActive,
+	registerNode,
 }: {
 	item: Item;
 	pos: Pos;
 	width: number;
 	dragActive: boolean;
+	registerNode: (id: string, node: HTMLDivElement | null) => void;
 }) {
 	const { ref, isDragging, isDropping } = useDraggable({ id: item.id });
 	const flip = `scaleX(${item.flipX ? -1 : 1}) scaleY(${item.flipY ? -1 : 1})`;
 	const active = isDragging || isDropping;
 	return (
 		<div
-			ref={ref}
+			ref={(node) => {
+				ref(node);
+				registerNode(item.id, node);
+			}}
 			className="absolute cursor-grab active:cursor-grabbing"
 			style={{
 				left: `${pos.left}%`,
@@ -248,8 +201,6 @@ function DraggableItem({
 				width: `${width}%`,
 				touchAction: "none", // let dnd-kit own the gesture on touch screens
 				zIndex: active ? 50 : 1,
-				// Tight hit area; CSS ([data-dnd-dragging]) unclips the drag clone.
-				clipPath: contentClip(item),
 				// Glide only when some OTHER item is being dragged (so repel pushes ease).
 				// Never on the dragged/dropped item, else it slides in from its old spot.
 				transition:
@@ -276,6 +227,16 @@ function DraggableItem({
 
 export default function Day3() {
 	const stageRef = useRef<HTMLDivElement>(null);
+	// Actual rendered <img> nodes, so item height can be read from the DOM
+	// (real aspect ratio) instead of a hand-maintained ASPECT table.
+	const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+	const registerNode = (id: string, node: HTMLDivElement | null) => {
+		itemRefs.current[id] = node;
+	};
+	const heightPct = (id: string, rect: DOMRect) => {
+		const h = itemRefs.current[id]?.getBoundingClientRect().height ?? 0;
+		return (h / rect.height) * 100;
+	};
 	const [pos, setPos] = useState<Record<string, Pos>>(solvedPositions);
 	const [playing, setPlaying] = useState(false);
 	const [dragActive, setDragActive] = useState(false); // some item is being dragged
@@ -338,7 +299,7 @@ export default function Day3() {
 			// keep on-screen (can roam the side margins, not off the viewport edge)
 			return {
 				...prev,
-				[id]: clampToScreen(item, left, top, widths[id], rect),
+				[id]: clampToScreen(left, top, widths[id], heightPct(id, rect), rect),
 			};
 		});
 	}
@@ -382,10 +343,10 @@ export default function Day3() {
 						(REPEL_RADIUS - dist) * REPEL_STRENGTH,
 					);
 					next[it.id] = clampToScreen(
-						it,
 						o.left + (vx / dist) * push,
 						o.top + (vy / dist) * push,
 						widths[it.id],
+						heightPct(it.id, rect),
 						rect,
 					);
 					changed = true;
@@ -402,22 +363,22 @@ export default function Day3() {
 		if (!rect) return;
 		setPlaying(true);
 
-		const area = (i: Item) =>
-			widths[i.id] * widths[i.id] * (ASPECT[i.src] ?? 1);
+		const area = (i: Item) => widths[i.id] * heightPct(i.id, rect);
 		const order = [...ITEMS].sort((a, b) => area(b) - area(a)); // big ones first
 		const placed: Box[] = [];
 		const next: Record<string, Pos> = {};
 
 		for (const item of order) {
 			const w = widths[item.id];
-			const bnd = screenBounds(item, w, rect);
+			const h = heightPct(item.id, rect);
+			const bnd = screenBounds(w, h, rect);
 			let best: Pos | null = null;
 			let bestBox: Box | null = null;
 			let bestOverlap = Infinity;
 			for (let n = 0; n < SHUFFLE_TRIES; n++) {
 				const left = bnd.minLeft + Math.random() * (bnd.maxLeft - bnd.minLeft);
 				const top = bnd.minTop + Math.random() * (bnd.maxTop - bnd.minTop);
-				const box = contentPxBox(item, left, top, w, rect);
+				const box = contentPxBox(left, top, w, h, rect);
 				const ov = placed.reduce((m, p) => Math.max(m, overlapFrac(box, p)), 0);
 				if (ov < bestOverlap) {
 					best = { left, top };
@@ -476,12 +437,12 @@ export default function Day3() {
 				{SHELVES.map((s) => (
 					<div
 						key={s.top}
-						className="absolute left-[23%] w-[56%] rounded-md bg-[#6a4dad]"
+						className="absolute left-[23%] w-[56%] bg-[#6a4dad]"
 						style={{
 							top: `${s.top}%`,
 							height: `${s.height}%`,
-							boxShadow:
-								"inset 0 6px 16px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.12)",
+							// hard-edged inner shadow: solid band on left + top, no blur
+							boxShadow: "inset 7px 7px 0 rgba(0,0,0,.22)",
 						}}
 					/>
 				))}
@@ -499,6 +460,7 @@ export default function Day3() {
 							pos={pos[item.id]}
 							width={widths[item.id]}
 							dragActive={dragActive}
+							registerNode={registerNode}
 						/>
 					))}
 				</DragDropProvider>
