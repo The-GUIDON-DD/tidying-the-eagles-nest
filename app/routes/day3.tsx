@@ -30,9 +30,6 @@ const SHELVES = [
 ];
 
 // Back -> front (array order = z-order). All units are % of the stage.
-// `solved.left/top` target each PNG's *visible* content, not its canvas:
-// several assets sit in the lower-middle of a transparent square, so the
-// corner is offset so the opaque pixels land in the right shelf.
 const ITEMS: Item[] = [
 	{
 		id: "towel",
@@ -107,6 +104,123 @@ const ITEMS: Item[] = [
 const SNAP = 5; // % distance within which an item clicks into its home slot
 const WIN_TOL = 0.6; // % tolerance for the solved check
 
+const REPEL_RADIUS = 16; // % gap under which a nearby idle item gets nudged
+const REPEL_STRENGTH = 0.28; // nudge magnitude per % of overlap
+const REPEL_MAX = 1.4; // % cap on a single nudge step
+
+const SHUFFLE_TRIES = 40; // candidate spots tried per item when scattering
+const SHUFFLE_MAX_OVERLAP = 0.12; // accept a spot once overlap is under ~12%
+
+// Opaque bounding box per asset (fractions of the PNG), measured from alpha.
+// Clips each item's hit area to its visible pixels, so transparent margins let
+// clicks fall through to the item behind. Padded a touch to avoid cropping art.
+const CONTENT: Record<string, { l: number; r: number; t: number; b: number }> =
+	{
+		"towel.png": { l: 0.1, r: 0.9, t: 0.02, b: 0.96 },
+		"clothes.png": { l: 0.06, r: 0.95, t: 0.21, b: 0.79 },
+		"sneaker.png": { l: 0.08, r: 0.9, t: 0.39, b: 0.79 },
+		"gym bag.png": { l: 0.03, r: 0.96, t: 0.28, b: 0.82 },
+		"yoga mat.png": { l: 0.35, r: 0.63, t: 0.07, b: 0.93 },
+		"arnis stick.png": { l: 0.47, r: 0.59, t: 0.03, b: 0.97 },
+		"barbell.png": { l: 0.36, r: 0.63, t: 0.02, b: 0.98 },
+		"tennis racket.png": { l: 0.12, r: 0.85, t: 0.04, b: 0.96 },
+		"water jug.png": { l: 0.2, r: 0.77, t: 0.06, b: 0.93 },
+		"weights.png": { l: 0.17, r: 0.82, t: 0.02, b: 0.99 },
+	};
+
+// imgH / imgW per asset — used to compute an item's rendered height in stage %.
+const ASPECT: Record<string, number> = {
+	"towel.png": 1.625,
+	"clothes.png": 1,
+	"sneaker.png": 1,
+	"gym bag.png": 1,
+	"yoga mat.png": 2,
+	"arnis stick.png": 2,
+	"barbell.png": 1,
+	"tennis racket.png": 2,
+	"water jug.png": 2,
+	"weights.png": 1,
+};
+
+// Opaque box for an item, mirrored to match its flips (fractions of the image).
+function contentBox(item: Item) {
+	const c = CONTENT[item.src] ?? { l: 0, r: 1, t: 0, b: 1 };
+	let { l, r, t, b } = c;
+	if (item.flipX) [l, r] = [1 - r, 1 - l];
+	if (item.flipY) [t, b] = [1 - b, 1 - t];
+	return { l, r, t, b };
+}
+
+// A clip-path inset matching the opaque box (padded a touch so art isn't cropped).
+function contentClip(item: Item): string | undefined {
+	if (!CONTENT[item.src]) return undefined;
+	const { l, r, t, b } = contentBox(item);
+	const pad = 0.025;
+	const pct = (n: number) =>
+		`${(Math.min(1, Math.max(0, n)) * 100).toFixed(1)}%`;
+	return `inset(${pct(t - pad)} ${pct(1 - r - pad)} ${pct(1 - b - pad)} ${pct(l - pad)})`;
+}
+
+// The stage-% range that keeps an item's visible content inside the viewport.
+// Positions are stage-%, so we fold in the stage's on-screen offset (rect).
+function screenBounds(item: Item, width: number, rect: DOMRect) {
+	const { l, r, t, b } = contentBox(item);
+	const h = width * (ASPECT[item.src] ?? 1) * (9 / 16); // rendered height, stage %
+	const vw = typeof window !== "undefined" ? window.innerWidth : rect.width;
+	const vh = typeof window !== "undefined" ? window.innerHeight : rect.height;
+	return {
+		minLeft: -l * width - (rect.left * 100) / rect.width,
+		maxLeft: ((vw - rect.left) * 100) / rect.width - r * width,
+		minTop: -t * h - (rect.top * 100) / rect.height,
+		maxTop: ((vh - rect.top) * 100) / rect.height - b * h,
+	};
+}
+
+// Keep an item's visible content within the SCREEN (not the stage) so it can be
+// dragged out into the side margins but never lost off the viewport edge.
+function clampToScreen(
+	item: Item,
+	left: number,
+	top: number,
+	width: number,
+	rect: DOMRect,
+): Pos {
+	const b = screenBounds(item, width, rect);
+	return {
+		left: Math.min(b.maxLeft, Math.max(b.minLeft, left)),
+		top: Math.min(b.maxTop, Math.max(b.minTop, top)),
+	};
+}
+
+type Box = { x0: number; x1: number; y0: number; y1: number };
+
+// The item's visible-content rectangle in viewport pixels (for overlap tests).
+function contentPxBox(
+	item: Item,
+	left: number,
+	top: number,
+	width: number,
+	rect: DOMRect,
+): Box {
+	const { l, r, t, b } = contentBox(item);
+	const pxW = (width / 100) * rect.width;
+	const pxH = pxW * (ASPECT[item.src] ?? 1);
+	const x = (left / 100) * rect.width;
+	const y = (top / 100) * rect.height;
+	return { x0: x + l * pxW, x1: x + r * pxW, y0: y + t * pxH, y1: y + b * pxH };
+}
+
+// Overlap of two content boxes as a fraction of the smaller box's area.
+function overlapFrac(a: Box, b: Box): number {
+	const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0));
+	const iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+	const inter = ix * iy;
+	if (inter <= 0) return 0;
+	const areaA = (a.x1 - a.x0) * (a.y1 - a.y0);
+	const areaB = (b.x1 - b.x0) * (b.y1 - b.y0);
+	return inter / Math.min(areaA, areaB);
+}
+
 const solvedPositions = (): Record<string, Pos> =>
 	Object.fromEntries(ITEMS.map((i) => [i.id, i.solved]));
 
@@ -114,13 +228,16 @@ function DraggableItem({
 	item,
 	pos,
 	width,
+	dragActive,
 }: {
 	item: Item;
 	pos: Pos;
 	width: number;
+	dragActive: boolean;
 }) {
-	const { ref, isDragging } = useDraggable({ id: item.id });
+	const { ref, isDragging, isDropping } = useDraggable({ id: item.id });
 	const flip = `scaleX(${item.flipX ? -1 : 1}) scaleY(${item.flipY ? -1 : 1})`;
+	const active = isDragging || isDropping;
 	return (
 		<div
 			ref={ref}
@@ -130,17 +247,29 @@ function DraggableItem({
 				top: `${pos.top}%`,
 				width: `${width}%`,
 				touchAction: "none", // let dnd-kit own the gesture on touch screens
-				zIndex: isDragging ? 50 : 1,
+				zIndex: active ? 50 : 1,
+				// Tight hit area; CSS ([data-dnd-dragging]) unclips the drag clone.
+				clipPath: contentClip(item),
+				// Glide only when some OTHER item is being dragged (so repel pushes ease).
+				// Never on the dragged/dropped item, else it slides in from its old spot.
+				transition:
+					dragActive && !active
+						? "left 120ms ease-out, top 120ms ease-out"
+						: "none",
 			}}
 		>
-			{/* flip lives on the img so it survives dnd-kit driving the outer div */}
-			<img
-				src={asset(item.src)}
-				alt=""
-				draggable={false}
-				className="w-full select-none"
-				style={{ transform: flip !== "scaleX(1) scaleY(1)" ? flip : undefined }}
-			/>
+			{/* .day3-grow is scaled while dragging via CSS (app.css) so the grow
+          survives dnd-kit cloning the node into a popover overlay. Flip stays
+          on the img so it does not fight dnd-kit's transform. */}
+			<div className="day3-grow w-full">
+				<img
+					src={asset(item.src)}
+					alt=""
+					draggable={false}
+					className="w-full select-none"
+					style={{ transform: flip }}
+				/>
+			</div>
 		</div>
 	);
 }
@@ -149,8 +278,9 @@ export default function Day3() {
 	const stageRef = useRef<HTMLDivElement>(null);
 	const [pos, setPos] = useState<Record<string, Pos>>(solvedPositions);
 	const [playing, setPlaying] = useState(false);
+	const [dragActive, setDragActive] = useState(false); // some item is being dragged
 	// dev overlay: add ?ref=1 to the URL to superimpose the reference at 30%,
-	// show a tweak panel, and disable snapping so items place freely.
+	// show a tweak panel, disable snapping and repel so items place freely.
 	const [showRef, setShowRef] = useState(false);
 	const [widths, setWidths] = useState<Record<string, number>>(() =>
 		Object.fromEntries(ITEMS.map((i) => [i.id, i.width])),
@@ -183,6 +313,7 @@ export default function Day3() {
 		};
 		canceled: boolean;
 	}) {
+		setDragActive(false);
 		const { operation, canceled } = event;
 		const source = operation.source;
 		const rect = stageRef.current?.getBoundingClientRect();
@@ -204,20 +335,103 @@ export default function Day3() {
 				left = item.solved.left;
 				top = item.solved.top;
 			}
-			return { ...prev, [id]: { left, top } };
+			// keep on-screen (can roam the side margins, not off the viewport edge)
+			return {
+				...prev,
+				[id]: clampToScreen(item, left, top, widths[id], rect),
+			};
 		});
 	}
 
+	// Magnetic repel: while dragging, gently push nearby idle items away so they
+	// read as solid objects, not stacking stickers. Off in dev for exact placing.
+	function handleDragMove(event: {
+		operation: {
+			source: { id: string | number } | null;
+			transform: { x: number; y: number };
+		};
+	}) {
+		if (showRef) return;
+		const src = event.operation.source;
+		const rect = stageRef.current?.getBoundingClientRect();
+		if (!src || !rect) return;
+		const id = String(src.id);
+		const base = pos[id];
+		if (!base) return;
+		const dx = base.left + (event.operation.transform.x / rect.width) * 100;
+		const dy = base.top + (event.operation.transform.y / rect.height) * 100;
+		setPos((prev) => {
+			let changed = false;
+			const next = { ...prev };
+			for (const it of ITEMS) {
+				if (it.id === id) continue;
+				const o = prev[it.id];
+				// don't disturb an item already snapped in its correct spot
+				if (
+					Math.abs(o.left - it.solved.left) < WIN_TOL &&
+					Math.abs(o.top - it.solved.top) < WIN_TOL
+				) {
+					continue;
+				}
+				const vx = o.left - dx;
+				const vy = o.top - dy;
+				const dist = Math.hypot(vx, vy);
+				if (dist > 0.001 && dist < REPEL_RADIUS) {
+					const push = Math.min(
+						REPEL_MAX,
+						(REPEL_RADIUS - dist) * REPEL_STRENGTH,
+					);
+					next[it.id] = clampToScreen(
+						it,
+						o.left + (vx / dist) * push,
+						o.top + (vy / dist) * push,
+						widths[it.id],
+						rect,
+					);
+					changed = true;
+				}
+			}
+			return changed ? next : prev;
+		});
+	}
+
+	// Scatter items anywhere on the SCREEN (cabinet or side margins), trying to
+	// keep overlaps low — some touching is fine, big pile-ups are not.
 	function shuffle() {
+		const rect = stageRef.current?.getBoundingClientRect();
+		if (!rect) return;
 		setPlaying(true);
-		setPos(
-			Object.fromEntries(
-				ITEMS.map((i) => [
-					i.id,
-					{ left: 8 + Math.random() * 58, top: 6 + Math.random() * 74 },
-				]),
-			),
-		);
+
+		const area = (i: Item) =>
+			widths[i.id] * widths[i.id] * (ASPECT[i.src] ?? 1);
+		const order = [...ITEMS].sort((a, b) => area(b) - area(a)); // big ones first
+		const placed: Box[] = [];
+		const next: Record<string, Pos> = {};
+
+		for (const item of order) {
+			const w = widths[item.id];
+			const bnd = screenBounds(item, w, rect);
+			let best: Pos | null = null;
+			let bestBox: Box | null = null;
+			let bestOverlap = Infinity;
+			for (let n = 0; n < SHUFFLE_TRIES; n++) {
+				const left = bnd.minLeft + Math.random() * (bnd.maxLeft - bnd.minLeft);
+				const top = bnd.minTop + Math.random() * (bnd.maxTop - bnd.minTop);
+				const box = contentPxBox(item, left, top, w, rect);
+				const ov = placed.reduce((m, p) => Math.max(m, overlapFrac(box, p)), 0);
+				if (ov < bestOverlap) {
+					best = { left, top };
+					bestBox = box;
+					bestOverlap = ov;
+				}
+				if (ov <= SHUFFLE_MAX_OVERLAP) break; // good enough, stop trying
+			}
+			if (best && bestBox) {
+				placed.push(bestBox);
+				next[item.id] = best;
+			}
+		}
+		setPos(next);
 	}
 
 	return (
@@ -273,13 +487,18 @@ export default function Day3() {
 				))}
 
 				{/* draggable items */}
-				<DragDropProvider onDragEnd={handleDragEnd}>
+				<DragDropProvider
+					onDragStart={() => setDragActive(true)}
+					onDragMove={handleDragMove}
+					onDragEnd={handleDragEnd}
+				>
 					{ITEMS.map((item) => (
 						<DraggableItem
 							key={item.id}
 							item={item}
 							pos={pos[item.id]}
 							width={widths[item.id]}
+							dragActive={dragActive}
 						/>
 					))}
 				</DragDropProvider>
@@ -294,7 +513,7 @@ export default function Day3() {
 				)}
 			</div>
 
-			{/* dev-only tweak panel: live x/y, editable width, snap disabled */}
+			{/* dev-only tweak panel: live x/y, editable width, snap + repel disabled */}
 			{showRef && (
 				<div className="fixed right-2 top-2 z-[70] max-h-[96dvh] w-60 overflow-auto rounded-lg bg-black/75 p-2 font-mono text-[11px] leading-tight text-white shadow-xl backdrop-blur">
 					<div className="mb-1.5 flex items-center justify-between">
