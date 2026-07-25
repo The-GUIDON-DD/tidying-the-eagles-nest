@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
 import { DragDropProvider, useDraggable } from "@dnd-kit/react";
+import { useEffect, useRef, useState } from "react";
+import solutionsData from "./day3.solutions.json";
 
 export function meta() {
 	return [
@@ -15,8 +16,9 @@ type Item = {
 	width: number; // % of stage width; height follows the image's aspect ratio
 	flipX?: boolean; // mirror left/right (reflect across the y-axis)
 	flipY?: boolean; // mirror top/bottom (reflect across the x-axis)
-	solved: Pos; // the correct resting spot, as % of the 9:16 stage
 };
+// One full valid layout: item id -> resting spot, % of the 9:16 stage.
+type Board = Record<string, Pos>;
 
 // Filenames have spaces; encodeURI turns them into %20 while leaving "/" alone.
 const asset = (file: string) => encodeURI(`/day3/${file}`);
@@ -31,75 +33,28 @@ const SHELVES = [
 
 // Back -> front (array order = z-order). All units are % of the stage.
 const ITEMS: Item[] = [
-	{
-		id: "towel",
-		src: "towel.png",
-		width: 14.88,
-		solved: { left: 23.51, top: 5.3 },
-	},
-	{
-		id: "clothes",
-		src: "clothes.png",
-		width: 41.83,
-		solved: { left: 37.56, top: 5.43 },
-	},
-	{
-		id: "sneaker-l",
-		src: "sneaker.png",
-		width: 32.19,
-		solved: { left: 24.04, top: 25.2 },
-	},
+	{ id: "towel", src: "towel.png", width: 14.88 },
+	{ id: "clothes", src: "clothes.png", width: 41.83 },
+	{ id: "sneaker-l", src: "sneaker.png", width: 32.19 },
 	{
 		id: "sneaker-r",
 		src: "sneaker.png",
 		width: 32.19,
 		flipX: true,
 		flipY: true,
-		solved: { left: 46.07, top: 24.35 },
 	},
-	{
-		id: "bag",
-		src: "gym bag.png",
-		width: 55.37,
-		solved: { left: 23.48, top: 37.7 },
-	},
-	{
-		id: "mat",
-		src: "yoga mat.png",
-		width: 11.55,
-		solved: { left: 24.77, top: 59.27 },
-	},
-	{
-		id: "arnis",
-		src: "arnis stick.png",
-		width: 5.27,
-		solved: { left: 36.09, top: 59.97 },
-	},
-	{
-		id: "racket",
-		src: "tennis racket.png",
-		width: 25.35,
-		solved: { left: 48.99, top: 59.25 },
-	},
-	{
-		id: "barbell",
-		src: "barbell.png",
-		width: 11.01,
-		solved: { left: 41.02, top: 60.1 },
-	},
-	{
-		id: "jug",
-		src: "water jug.png",
-		width: 11.47,
-		solved: { left: 66.04, top: 75.33 },
-	},
-	{
-		id: "kettlebell",
-		src: "weights.png",
-		width: 18.9,
-		solved: { left: 40.91, top: 79.3 },
-	},
+	{ id: "bag", src: "gym bag.png", width: 55.37 },
+	{ id: "mat", src: "yoga mat.png", width: 11.55 },
+	{ id: "arnis", src: "arnis stick.png", width: 5.27 },
+	{ id: "racket", src: "tennis racket.png", width: 25.35 },
+	{ id: "barbell", src: "barbell.png", width: 11.01 },
+	{ id: "jug", src: "water jug.png", width: 11.47 },
+	{ id: "kettlebell", src: "weights.png", width: 18.9 },
 ];
+
+// Every valid layout — none is more "correct" than another. Paste each
+// ?dev=1 panel's "Copy" output here as one array entry.
+const SOLUTIONS = solutionsData as Board[];
 
 const SNAP = 5; // % distance within which an item clicks into its home slot
 const WIN_TOL = 0.6; // % tolerance for the solved check
@@ -169,8 +124,22 @@ function overlapFrac(a: Box, b: Box): number {
 	return inter / Math.min(areaA, areaB);
 }
 
-const solvedPositions = (): Record<string, Pos> =>
-	Object.fromEntries(ITEMS.map((i) => [i.id, i.solved]));
+const defaultPositions = (): Record<string, Pos> =>
+	Object.fromEntries(
+		ITEMS.map((i) => [i.id, SOLUTIONS[0]?.[i.id] ?? { left: 0, top: 0 }]),
+	);
+
+// True if item `id` is currently resting at one of its valid spots, in any layout.
+function isSettled(id: string, p: Pos): boolean {
+	return SOLUTIONS.some((board) => {
+		const s = board[id];
+		return (
+			s &&
+			Math.abs(p.left - s.left) < WIN_TOL &&
+			Math.abs(p.top - s.top) < WIN_TOL
+		);
+	});
+}
 
 function DraggableItem({
 	item,
@@ -237,34 +206,40 @@ export default function Day3() {
 		const h = itemRefs.current[id]?.getBoundingClientRect().height ?? 0;
 		return (h / rect.height) * 100;
 	};
-	const [pos, setPos] = useState<Record<string, Pos>>(solvedPositions);
+	const [pos, setPos] = useState<Record<string, Pos>>(defaultPositions);
 	const [playing, setPlaying] = useState(false);
 	const [dragActive, setDragActive] = useState(false); // some item is being dragged
-	// dev overlay: add ?ref=1 to the URL to superimpose the reference at 30%,
-	// show a tweak panel, disable snapping and repel so items place freely.
-	const [showRef, setShowRef] = useState(false);
+	// dev mode: add ?dev=1 to the URL for the tweak panel (live x/y, editable
+	// width, Copy button) with snapping and repel disabled so items can be
+	// dragged to exact spots — e.g. to capture alternate valid layouts.
+	const [dev, setDev] = useState(false);
 	const [widths, setWidths] = useState<Record<string, number>>(() =>
 		Object.fromEntries(ITEMS.map((i) => [i.id, i.width])),
 	);
 	useEffect(() => {
-		setShowRef(new URLSearchParams(window.location.search).has("ref"));
+		setDev(new URLSearchParams(window.location.search).has("dev"));
 	}, []);
 
 	const round = (n: number) => Math.round(n * 10) / 10;
 
+	// Copies the current arrangement as one SOLUTIONS board entry.
 	function copyValues() {
 		const lines = ITEMS.map((it) => {
 			const p = pos[it.id];
-			const flips = `${it.flipX ? " flipX: true," : ""}${it.flipY ? " flipY: true," : ""}`;
-			return `  { id: "${it.id}", src: "${it.src}", width: ${round(widths[it.id])},${flips} solved: { left: ${round(p.left)}, top: ${round(p.top)} } },`;
+			return `    "${it.id}": { left: ${round(p.left)}, top: ${round(p.top)} },`;
 		}).join("\n");
-		navigator.clipboard?.writeText(lines);
+		navigator.clipboard?.writeText(`  {\n${lines}\n  },`);
 	}
 
-	const isSolved = ITEMS.every(
-		(i) =>
-			Math.abs(pos[i.id].left - i.solved.left) < WIN_TOL &&
-			Math.abs(pos[i.id].top - i.solved.top) < WIN_TOL,
+	const isSolved = SOLUTIONS.some((board) =>
+		ITEMS.every((i) => {
+			const s = board[i.id];
+			return (
+				s &&
+				Math.abs(pos[i.id].left - s.left) < WIN_TOL &&
+				Math.abs(pos[i.id].top - s.top) < WIN_TOL
+			);
+		}),
 	);
 
 	function handleDragEnd(event: {
@@ -281,20 +256,21 @@ export default function Day3() {
 		if (canceled || !source || !rect) return;
 
 		const id = String(source.id);
-		const item = ITEMS.find((i) => i.id === id);
-		if (!item) return;
+		if (!ITEMS.some((i) => i.id === id)) return;
 
 		setPos((prev) => {
 			let left = prev[id].left + (operation.transform.x / rect.width) * 100;
 			let top = prev[id].top + (operation.transform.y / rect.height) * 100;
-			// soft-snap into the home slot when released close to it (off in dev mode)
-			if (
-				!showRef &&
-				Math.abs(left - item.solved.left) < SNAP &&
-				Math.abs(top - item.solved.top) < SNAP
-			) {
-				left = item.solved.left;
-				top = item.solved.top;
+			// soft-snap into a valid slot when released close to one (off in dev mode)
+			if (!dev) {
+				const hit = SOLUTIONS.map((b) => b[id]).find(
+					(s) =>
+						s && Math.abs(left - s.left) < SNAP && Math.abs(top - s.top) < SNAP,
+				);
+				if (hit) {
+					left = hit.left;
+					top = hit.top;
+				}
 			}
 			// keep on-screen (can roam the side margins, not off the viewport edge)
 			return {
@@ -312,7 +288,7 @@ export default function Day3() {
 			transform: { x: number; y: number };
 		};
 	}) {
-		if (showRef) return;
+		if (dev) return;
 		const src = event.operation.source;
 		const rect = stageRef.current?.getBoundingClientRect();
 		if (!src || !rect) return;
@@ -327,13 +303,8 @@ export default function Day3() {
 			for (const it of ITEMS) {
 				if (it.id === id) continue;
 				const o = prev[it.id];
-				// don't disturb an item already snapped in its correct spot
-				if (
-					Math.abs(o.left - it.solved.left) < WIN_TOL &&
-					Math.abs(o.top - it.solved.top) < WIN_TOL
-				) {
-					continue;
-				}
+				// don't disturb an item already snapped in a valid spot
+				if (isSettled(it.id, o)) continue;
 				const vx = o.left - dx;
 				const vy = o.top - dy;
 				const dist = Math.hypot(vx, vy);
@@ -408,7 +379,7 @@ export default function Day3() {
 				</button>
 				<button
 					type="button"
-					onClick={() => setPos(solvedPositions())}
+					onClick={() => setPos(defaultPositions())}
 					className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
 				>
 					Reset
@@ -464,19 +435,11 @@ export default function Day3() {
 						/>
 					))}
 				</DragDropProvider>
-
-				{/* dev-only reference overlay (?ref=1) for hand-fitting the layout */}
-				{showRef && (
-					<img
-						src="/day3/reference.png"
-						alt=""
-						className="pointer-events-none absolute inset-0 z-40 h-full w-full opacity-30"
-					/>
-				)}
 			</div>
 
-			{/* dev-only tweak panel: live x/y, editable width, snap + repel disabled */}
-			{showRef && (
+			{/* dev-only tweak panel (?dev=1): live x/y, editable width, snap + repel
+			    disabled so items can be dragged to exact spots. */}
+			{dev && (
 				<div className="fixed right-2 top-2 z-[70] max-h-[96dvh] w-60 overflow-auto rounded-lg bg-black/75 p-2 font-mono text-[11px] leading-tight text-white shadow-xl backdrop-blur">
 					<div className="mb-1.5 flex items-center justify-between">
 						<span className="font-semibold text-emerald-300">
