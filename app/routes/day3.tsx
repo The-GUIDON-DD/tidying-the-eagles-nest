@@ -209,6 +209,7 @@ export default function Day3() {
 	const [pos, setPos] = useState<Record<string, Pos>>(defaultPositions);
 	const [playing, setPlaying] = useState(false);
 	const [dragActive, setDragActive] = useState(false); // some item is being dragged
+	const [finished, setFinished] = useState(false); // win popup dismissed
 	// dev mode: add ?dev=1 to the URL for the tweak panel (live x/y, editable
 	// width, Copy button) with snapping and repel disabled so items can be
 	// dragged to exact spots — e.g. to capture alternate valid layouts.
@@ -333,6 +334,7 @@ export default function Day3() {
 		const rect = stageRef.current?.getBoundingClientRect();
 		if (!rect) return;
 		setPlaying(true);
+		setFinished(false);
 
 		const area = (i: Item) => widths[i.id] * heightPct(i.id, rect);
 		const order = [...ITEMS].sort((a, b) => area(b) - area(a)); // big ones first
@@ -366,29 +368,74 @@ export default function Day3() {
 		setPos(next);
 	}
 
+	// Scatter once on load. Placement reads item heights off the DOM, and an
+	// <img> measures 0 until it loads — so wait for every height, then shuffle.
+	// ponytail: rAF poll instead of per-image onLoad counting; covers cached
+	// images (whose load event can fire before React attaches the handler) too.
+	// Items stay invisible (but laid out, so they still measure) until then —
+	// otherwise the tidy starting layout flashes for a frame or two.
+	const autoShuffled = useRef(false);
+	useEffect(() => {
+		let raf = 0;
+		const deadline = performance.now() + 2500; // never leave items hidden
+		const tick = () => {
+			if (autoShuffled.current) return;
+			const rect = stageRef.current?.getBoundingClientRect();
+			const loaded = rect && ITEMS.every((i) => heightPct(i.id, rect) > 0);
+			if (loaded || performance.now() > deadline) {
+				autoShuffled.current = true;
+				shuffle();
+				return;
+			}
+			raf = requestAnimationFrame(tick);
+		};
+		raf = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(raf);
+	}, []);
+
 	return (
 		<main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[#7c62c6]">
-			{/* controls live in the letterbox / over the frame, out of the way */}
-			<div className="absolute left-3 top-3 z-[60] flex gap-2">
-				<button
-					type="button"
-					onClick={shuffle}
-					className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
-				>
-					Shuffle
-				</button>
-				<button
-					type="button"
-					onClick={() => setPos(defaultPositions())}
-					className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
-				>
-					Reset
-				</button>
-			</div>
+			{/* dev-only controls (?dev=1), in the letterbox out of the way */}
+			{dev && (
+				<div className="absolute left-3 top-3 z-[60] flex gap-2">
+					<button
+						type="button"
+						onClick={shuffle}
+						className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
+					>
+						Shuffle
+					</button>
+					<button
+						type="button"
+						onClick={() => setPos(defaultPositions())}
+						className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
+					>
+						Reset
+					</button>
+				</div>
+			)}
 
-			{playing && isSolved && (
-				<div className="absolute top-4 z-[60] rounded-full bg-emerald-400/90 px-5 py-2 text-sm font-semibold text-emerald-950 shadow-lg">
-					✓ Tidied!
+			{playing && isSolved && !finished && (
+				<div className="day3-backdrop absolute inset-0 z-65 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+					<div
+						className="day3-pop w-full max-w-xl bg-[#FFFBE6] px-8 py-8 text-center text-black shadow-2xl sm:px-12 sm:py-10"
+						style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
+					>
+						<h2 className="text-3xl font-extrabold sm:text-4xl">Excellent!</h2>
+						<p className="mt-5 text-base leading-8 sm:text-lg sm:leading-9">
+							Now with both a strong mind and enduring body, you are sure to win
+							against any physical trials fate puts in your way—be it long
+							E-Jeep queues, unexpected heavy lifting, multiple flights of
+							stairs, or the occasional run from Bellarmine to SEC Building.
+						</p>
+						<button
+							type="button"
+							onClick={() => setFinished(true)}
+							className="mt-8 rounded-xl bg-[#9d9d9d] px-10 py-3 text-lg transition hover:bg-[#8b8b8b]"
+						>
+							Finish
+						</button>
+					</div>
 				</div>
 			)}
 
@@ -424,16 +471,23 @@ export default function Day3() {
 					onDragMove={handleDragMove}
 					onDragEnd={handleDragEnd}
 				>
-					{ITEMS.map((item) => (
-						<DraggableItem
-							key={item.id}
-							item={item}
-							pos={pos[item.id]}
-							width={widths[item.id]}
-							dragActive={dragActive}
-							registerNode={registerNode}
-						/>
-					))}
+					{/* Hidden, not unmounted, until the first scatter: the images must
+					    stay in layout so they load and report their heights. */}
+					<div
+						className="transition-opacity duration-200"
+						style={{ opacity: playing ? 1 : 0 }}
+					>
+						{ITEMS.map((item) => (
+							<DraggableItem
+								key={item.id}
+								item={item}
+								pos={pos[item.id]}
+								width={widths[item.id]}
+								dragActive={dragActive}
+								registerNode={registerNode}
+							/>
+						))}
+					</div>
 				</DragDropProvider>
 			</div>
 

@@ -15,6 +15,31 @@ body {
 	}
 }
 
+/* day3 win popup — backdrop fades in, panel pops up under it. */
+.day3-backdrop {
+	animation: day3-fade 260ms ease-out both;
+}
+.day3-pop {
+	animation: day3-pop 320ms cubic-bezier(0.2, 0.9, 0.3, 1.35) both;
+}
+@keyframes day3-fade {
+	from {
+		opacity: 0;
+	}
+}
+@keyframes day3-pop {
+	from {
+		opacity: 0;
+		transform: scale(0.88) translateY(14px);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.day3-backdrop,
+	.day3-pop {
+		animation: none;
+	}
+}
+
 /* day3 locker — grow + wiggle an item on grab. dnd-kit clones the dragged
    node into a top-layer popover flagged [data-dnd-dragging], so React state
    only reaches the hidden original; CSS is what styles the visible clone. */
