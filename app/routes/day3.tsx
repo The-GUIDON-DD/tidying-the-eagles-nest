@@ -38,7 +38,7 @@ const ITEMS: Item[] = [
 		id: "towel",
 		src: "towel.png",
 		width: 17.5,
-		solved: { left: 23.2, top: 5.3 },
+		solved: { left: 22.2, top: 5.3 },
 	},
 	{
 		id: "clothes",
@@ -50,7 +50,7 @@ const ITEMS: Item[] = [
 		id: "sneaker-l",
 		src: "sneaker.png",
 		width: 37,
-		solved: { left: 24, top: 17.6 },
+		solved: { left: 22, top: 17.6 },
 	},
 	{
 		id: "sneaker-r",
