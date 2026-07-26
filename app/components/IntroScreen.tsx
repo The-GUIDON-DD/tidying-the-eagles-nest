@@ -104,14 +104,21 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
         </DragDropProvider>
       </div>
       <article
-        className="absolute w-1/2 h-[70vh] left-1/4 duration-500 flex flex-col items-center py-10"
+        className="absolute w-1/2 h-[70vh] left-1/4 duration-500 flex flex-col items-center py-10 px-15"
         style={{
           bottom: isOverSnapArea ? 0 : "-70vh",
           backgroundBlendMode: "overlay, color-burn",
           background:
             "center / cover url('/letter/grain.svg'), linear-gradient(rgba(217,217,217,0), rgba(45,45,45,0.6)), #ffefe0",
         }}
-      ></article>
+      >
+        <h1 className="font-display font-bold">Hey there, wanderer!</h1>
+        <p>
+          Before you know it, you'll be entering the Dreamlands. Organize these
+          items in your satchel to ensure that you have everything you need for
+          your first day.
+        </p>
+      </article>
     </main>
   );
 }
