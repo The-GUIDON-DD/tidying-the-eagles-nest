@@ -55,6 +55,7 @@ function DraggableEnvelope({
 export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
   const [envelopePos, setPosition] = useState({ x: 0, y: 0 });
   const [isOverSnapArea, setIsOverSnapArea] = useState(false);
+  const [showLetter, setShowLetter] = useState(false);
 
   return (
     <main
@@ -67,12 +68,12 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
       <div
         className="size-full"
         style={{
-          filter: `blur(${isOverSnapArea ? "1rem" : "0rem"})`,
+          filter: `blur(${showLetter ? "1rem" : "0rem"})`,
         }}
       >
         <DragDropProvider
           onBeforeDragStart={(event) => {
-            if (isOverSnapArea) {
+            if (isOverSnapArea || showLetter) {
               event.preventDefault();
             }
           }}
@@ -85,6 +86,7 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
             // Snap to center when over drop area
             if (event.operation.target) {
               setPosition({ x: -585, y: 0 });
+              setShowLetter(true);
             }
           }}
           onDragMove={(event) => {
@@ -97,7 +99,7 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
         >
           <DroppableSection />
           <DraggableEnvelope
-            isOpen={isOverSnapArea}
+            isOpen={showLetter}
             position={envelopePos}
             isOverSnapArea={isOverSnapArea}
           />
@@ -106,14 +108,16 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
       <article
         className="absolute w-1/2 h-[70vh] left-1/4 duration-500 flex flex-col items-center py-10 px-15"
         style={{
-          bottom: isOverSnapArea ? 0 : "-70vh",
+          bottom: showLetter ? 0 : "-70vh",
           backgroundBlendMode: "overlay, color-burn",
           background:
             "center / cover url('/letter/grain.svg'), linear-gradient(rgba(217,217,217,0), rgba(45,45,45,0.6)), #ffefe0",
         }}
       >
-        <h1 className="font-display font-bold">Hey there, wanderer!</h1>
-        <p>
+        <h1 className="font-display font-bold text-3xl text-purple">
+          Hey there, wanderer!
+        </h1>
+        <p className="font-serif">
           Before you know it, you'll be entering the Dreamlands. Organize these
           items in your satchel to ensure that you have everything you need for
           your first day.
