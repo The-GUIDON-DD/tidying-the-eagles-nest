@@ -106,7 +106,7 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
         </DragDropProvider>
       </div>
       <article
-        className="absolute w-1/2 h-[70vh] left-1/4 duration-500 flex flex-col items-center py-10 px-15"
+        className="absolute w-1/2 h-[70vh] left-1/4 duration-500 flex flex-col items-center py-15 px-25 gap-10"
         style={{
           bottom: showLetter ? 0 : "-70vh",
           backgroundBlendMode: "overlay, color-burn",
@@ -114,14 +114,23 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
             "center / cover url('/letter/grain.svg'), linear-gradient(rgba(217,217,217,0), rgba(45,45,45,0.6)), #ffefe0",
         }}
       >
-        <h1 className="font-display font-bold text-3xl text-purple">
+        <h1 className="font-display font-bold text-5xl text-purple">
           Hey there, wanderer!
         </h1>
-        <p className="font-serif">
+        <p className="font-serif text-center text-2xl">
           Before you know it, you'll be entering the Dreamlands. Organize these
           items in your satchel to ensure that you have everything you need for
           your first day.
         </p>
+        <button
+          type="button"
+          className="flex items-center justify-center bg-purple px-10 py-2 rounded-4xl gap-2"
+        >
+          <p className="font-display font-bold text-white text-2xl uppercase">
+            Start
+          </p>
+          <img src="/start_arrow.svg" alt="Start Arrow" className="h-[60%]" />
+        </button>
       </article>
     </main>
   );
