@@ -14,3 +14,225 @@ body {
     color-scheme: dark;
   }
 }
+
+/* Novel Display Font */
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-Black.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-Black.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-BlackIt.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-BlackIt.woff") format("woff");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-Bold.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-Bold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-BoldIt.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-BoldIt.woff") format("woff");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-Italic.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-Italic.woff") format("woff");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-Light.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-Light.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-LightIt.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-LightIt.woff") format("woff");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-Medium.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-MediumIt.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-MediumIt.woff") format("woff");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-Regular.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-Regular.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd SemiBd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-SemiBd.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-SemiBd.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd SemiBd";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-SemiBdIt.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-SemiBdIt.woff") format("woff");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd Ultra";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-Ultra.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-Ultra.woff") format("woff");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd Ultra";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-UltraIt.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-UltraIt.woff") format("woff");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XBlack";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-XBlack.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-XBlack.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XBlack";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-XBlackIt.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-XBlackIt.woff") format("woff");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XBold";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-XBold.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-XBold.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XBold";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-XBoldIt.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-XBoldIt.woff") format("woff");
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XLight";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-XLight.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-XLight.woff") format("woff");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XLight";
+  src:
+    url("/NovelDisplay/NovelDisplayXCnd-XLightIt.woff2") format("woff2"),
+    url("/NovelDisplay/NovelDisplayXCnd-XLightIt.woff") format("woff");
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Skolar PE VF Font */
+@font-face {
+  font-family: "Skolar PE VF Italics";
+  src:
+    url("/SkolarPEVF/SkolarPEVF-Its.woff2") format("woff2"),
+    url("/SkolarPEVF/SkolarPEVF-Its.woff") format("woff");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE VF Uprights";
+  src:
+    url("/SkolarPEVF/SkolarPEVF-Ups.woff2") format("woff2"),
+    url("/SkolarPEVF/SkolarPEVF-Ups.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
