@@ -3,7 +3,7 @@ export function Flap({ isOpen }: { isOpen: boolean }) {
     <div
       className="grid place-items-center w-full"
       style={{
-        aspectRatio: "1072/495",
+        aspectRatio: "112/52",
         gridTemplateColumns: "1fr",
         gridTemplateRows: "1fr",
       }}
