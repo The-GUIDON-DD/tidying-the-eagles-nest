@@ -15,7 +15,7 @@ function DroppableSection() {
   return (
     <div
       ref={dropRef}
-      className="absolute w-[25vw] h-[50vh] top-[25vh] left-[37.5vw] border-amber-100 border-1"
+      className="absolute w-[20vw] h-[25vh] top-[37.5vh] left-[40vw] border-amber-100 border-1"
     />
   );
 }
@@ -23,9 +23,11 @@ function DroppableSection() {
 function DraggableEnvelope({
   isOpen,
   position,
+  isOverSnapArea,
 }: {
   isOpen: boolean;
   position: { x: number; y: number };
+  isOverSnapArea: boolean;
 }) {
   const { ref: dragRef } = useDraggable({
     id: "intro-envelope-drag",
@@ -35,12 +37,13 @@ function DraggableEnvelope({
   return (
     <div
       ref={dragRef}
-      className="w-1/2 absolute top-[20vh] right-[-20vw] duration-150"
+      className="w-1/2 absolute top-[25vh] right-[-20vw] duration-150"
       style={{}}
     >
       <div
         style={{
           translate: `${position.x}px ${position.y}px`,
+          rotate: isOverSnapArea ? "0deg" : "-12deg",
         }}
       >
         <Envelope isOpen={isOpen} />
@@ -50,40 +53,64 @@ function DraggableEnvelope({
 }
 
 export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
-  const [isOpen, setIsOpen] = useState(false);
   const [envelopePos, setPosition] = useState({ x: 0, y: 0 });
+  const [isOverSnapArea, setIsOverSnapArea] = useState(false);
 
   return (
-    <DragDropProvider
-      onDragEnd={(event) => {
-        // This makes the envelope not snap back to its original position
-        setPosition({
-          x: envelopePos.x + event.operation.transform.x,
-          y: envelopePos.y + event.operation.transform.y,
-        });
+    <main
+      className="h-screen w-screen"
+      style={{
+        background: bg,
+        overflow: "hidden",
       }}
-      plugins={(defaults) => [
-        ...defaults,
-        Feedback.configure({ dropAnimation: null }), // remove animation when drag ends
-      ]}
     >
-      <main
-        className="h-screen w-screen"
-        style={{ background: bg, overflow: "clip" }}
+      <div
+        className="size-full"
+        style={{
+          filter: `blur(${isOverSnapArea ? "1rem" : "0rem"})`,
+        }}
       >
-        <p className="absolute top-15 left-2">
-          Position: {JSON.stringify(envelopePos)}
-        </p>
-        <button
-          type="button"
-          className="absolute top-2 left-2 bg-white"
-          onClick={() => setIsOpen(!isOpen)}
+        <DragDropProvider
+          onBeforeDragStart={(event) => {
+            if (isOverSnapArea) {
+              event.preventDefault();
+            }
+          }}
+          onDragEnd={(event) => {
+            // This makes the envelope not snap back to its original position
+            setPosition({
+              x: envelopePos.x + event.operation.transform.x,
+              y: envelopePos.y + event.operation.transform.y,
+            });
+            // Snap to center when over drop area
+            if (event.operation.target) {
+              setPosition({ x: -585, y: 0 });
+            }
+          }}
+          onDragMove={(event) => {
+            setIsOverSnapArea(event.operation.target ? true : false);
+          }}
+          plugins={(defaults) => [
+            ...defaults,
+            Feedback.configure({ dropAnimation: null }), // remove animation when drag ends
+          ]}
         >
-          Toggle Open
-        </button>
-        <DroppableSection />
-        <DraggableEnvelope isOpen={isOpen} position={envelopePos} />
-      </main>
-    </DragDropProvider>
+          <DroppableSection />
+          <DraggableEnvelope
+            isOpen={isOverSnapArea}
+            position={envelopePos}
+            isOverSnapArea={isOverSnapArea}
+          />
+        </DragDropProvider>
+      </div>
+      <article
+        className="absolute w-1/2 h-[70vh] bottom-0 left-1/4"
+        style={{
+          backgroundBlendMode: "overlay, color-burn",
+          background:
+            "center / cover url('/letter/grain.svg'), linear-gradient(rgba(217,217,217,0), rgba(45,45,45,0.6)), #ffefe0",
+        }}
+      ></article>
+    </main>
   );
 }
