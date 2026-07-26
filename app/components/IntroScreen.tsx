@@ -104,8 +104,9 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
         </DragDropProvider>
       </div>
       <article
-        className="absolute w-1/2 h-[70vh] bottom-0 left-1/4"
+        className="absolute w-1/2 h-[70vh] left-1/4 duration-500 flex flex-col items-center py-10"
         style={{
+          bottom: isOverSnapArea ? 0 : "-70vh",
           backgroundBlendMode: "overlay, color-burn",
           background:
             "center / cover url('/letter/grain.svg'), linear-gradient(rgba(217,217,217,0), rgba(45,45,45,0.6)), #ffefe0",
