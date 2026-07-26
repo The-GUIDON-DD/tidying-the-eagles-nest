@@ -3,7 +3,7 @@
 import { RestrictToHorizontalAxis } from "@dnd-kit/abstract/modifiers";
 import { Feedback } from "@dnd-kit/dom";
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Envelope from "./Envelope";
 
 function DroppableSection() {
@@ -56,13 +56,19 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
   const [envelopePos, setPosition] = useState({ x: 0, y: 0 });
   const [isOverSnapArea, setIsOverSnapArea] = useState(false);
   const [showLetter, setShowLetter] = useState(false);
+  const [centerPos, setCenterPos] = useState(585);
+  useEffect(() => {
+    setCenterPos(window.innerWidth * 0.45); // eyeballed value
+    return () => {};
+  }, []);
 
   return (
     <main
-      className="h-screen w-screen"
+      className="h-screen w-screen max-h-screen max-w-screen"
       style={{
         background: bg,
-        overflow: "hidden",
+        overflowY: "clip",
+        overflowX: "clip",
       }}
     >
       <div
@@ -85,7 +91,7 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
             });
             // Snap to center when over drop area
             if (event.operation.target) {
-              setPosition({ x: -585, y: 0 });
+              setPosition({ x: -centerPos, y: 0 });
               setShowLetter(true);
             }
           }}
