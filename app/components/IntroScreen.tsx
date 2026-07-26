@@ -88,7 +88,7 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
             }
           }}
           onDragMove={(event) => {
-            setIsOverSnapArea(event.operation.target ? true : false);
+            setIsOverSnapArea(!!event.operation.target);
           }}
           plugins={(defaults) => [
             ...defaults,
