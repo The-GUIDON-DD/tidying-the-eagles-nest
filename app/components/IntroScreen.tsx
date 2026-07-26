@@ -15,7 +15,7 @@ function DroppableSection() {
   return (
     <div
       ref={dropRef}
-      className="absolute w-[20vw] h-[25vh] top-[37.5vh] left-[40vw] border-amber-100 border-1"
+      className="absolute w-[20vw] h-[25vh] top-[37.5vh] left-[40vw]"
     />
   );
 }
