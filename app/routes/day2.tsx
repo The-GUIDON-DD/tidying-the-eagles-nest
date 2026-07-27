@@ -16,9 +16,10 @@ type Pos = { left: number; top: number };
 type Item = {
   id: string;
   src: string;
-  width: number; // % of stage width; height follows the image's aspect ratio
+  width: number;
   flipX?: boolean;
   flipY?: boolean;
+  rotate?: number;
 };
 type FixedItem = Item & Pos;
 type Board = Record<string, Pos>;
@@ -26,7 +27,7 @@ type Board = Record<string, Pos>;
 const asset = (file: string) => encodeURI(`/day2/${file}`);
 
 const TRAY = { left: 12.85, top: 14.16, width: 73.26 };
-const PLATE = { left: 32.64, top: 23.93, width: 32.29, height: 51.76 };
+const PLATE = { left: 33.26, top: 22.9, width: 32.85 };
 
 const FIXED: FixedItem[] = [
   { id: "chicken", src: "chicken.png", left: 40.76, top: 25.0, width: 22.22 },
@@ -52,7 +53,7 @@ const FIXED: FixedItem[] = [
 
 const ITEMS: Item[] = [
   { id: "soup", src: "soup.png", width: 24.86 },
-  { id: "banana", src: "banana.png", width: 23.75 },
+  { id: "banana", src: "banana.png", width: 23.75, rotate: 147.5 },
   { id: "coffee", src: "coffee.png", width: 12.57 },
   { id: "cucumber-1", src: "cucumber 1.png", width: 6.11 },
   { id: "tomato-1", src: "tomato1.png", width: 6.32 },
@@ -148,15 +149,18 @@ function isSettled(id: string, p: Pos): boolean {
   });
 }
 
-type SnapOptions = { get: () => { dx: number; dy: number; tolerance: number } };
+type SnapOptions = {
+  get: () => { dx: number; dy: number; tolerance: number };
+  onLock?: (locked: boolean) => void;
+};
 class SnapToTarget extends Modifier<any, SnapOptions> {
   apply({ transform }: { transform: { x: number; y: number } }) {
     const opts = this.options;
     if (!opts) return transform;
     const { dx, dy, tolerance } = opts.get();
-    return Math.hypot(transform.x - dx, transform.y - dy) < tolerance
-      ? { x: dx, y: dy }
-      : transform;
+    const locked = Math.hypot(transform.x - dx, transform.y - dy) < tolerance;
+    opts.onLock?.(locked);
+    return locked ? { x: dx, y: dy } : transform;
   }
 }
 // biome-ignore lint/suspicious/noExplicitAny: matches the library's own configurator pattern
@@ -169,6 +173,7 @@ function DraggableItem({
   dragActive,
   registerNode,
   snap,
+  atRest,
   dev,
 }: {
   item: Item;
@@ -177,21 +182,39 @@ function DraggableItem({
   dragActive: boolean;
   registerNode: (id: string, node: HTMLDivElement | null) => void;
   snap: { dx: number; dy: number; tolerance: number };
+  atRest: boolean;
   dev: boolean;
 }) {
   // Always holds the latest snap target without forcing DraggableItem (or
   // dnd-kit's internal draggable instance) to re-render/re-init on change.
   const snapRef = useRef(snap);
   snapRef.current = snap;
+  // True the instant the hover-lock engages mid-drag (not just after drop) —
+  // lets rotate-on-lock items (e.g. the banana) turn as they lock in, rather
+  // than snapping to their final angle only once released.
+  const [dragLocked, setDragLocked] = useState(false);
   const modifiers = useMemo(
-    () => (dev ? [] : [SnapToTarget.configure({ get: () => snapRef.current })]),
+    () =>
+      dev
+        ? []
+        : [
+            SnapToTarget.configure({
+              get: () => snapRef.current,
+              onLock: (locked: boolean) =>
+                setDragLocked((prev) => (prev === locked ? prev : locked)),
+            }),
+          ],
     [dev],
   );
   const { ref, isDragging, isDropping } = useDraggable({
     id: item.id,
     modifiers,
   });
-  const flip = `scaleX(${item.flipX ? -1 : 1}) scaleY(${item.flipY ? -1 : 1})`;
+  useEffect(() => {
+    if (isDragging) setDragLocked(false);
+  }, [isDragging]);
+  const rotated = dragLocked || atRest;
+  const transform = `scaleX(${item.flipX ? -1 : 1}) scaleY(${item.flipY ? -1 : 1}) rotate(${rotated ? (item.rotate ?? 0) : 0}deg)`;
   const active = isDragging || isDropping;
   return (
     <div
@@ -218,7 +241,7 @@ function DraggableItem({
           alt=""
           draggable={false}
           className="w-full select-none"
-          style={{ transform: flip }}
+          style={{ transform, transition: "transform 260ms ease" }}
         />
       </div>
     </div>
@@ -344,8 +367,6 @@ export default function Day2() {
     });
   }
 
-  // dev-only: scatter items anywhere on the screen, trying to keep overlaps
-  // low, for exercising the repel/lock behavior outside the fixed layout.
   function shuffle() {
     const rect = stageRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -383,10 +404,6 @@ export default function Day2() {
     setPos(next);
   }
 
-  // Per-item hover-lock target: the pixel delta (from its current resting
-  // spot) that would land it exactly on its solved slot, plus a pixel radius
-  // derived from HOVER_SNAP_PCT. Recomputed each render off the live stage
-  // rect and the item's own (unchanging-during-its-own-drag) resting `pos`.
   function snapFor(id: string): { dx: number; dy: number; tolerance: number } {
     const rect = stageRef.current?.getBoundingClientRect();
     const target = SOLUTIONS[0]?.[id];
@@ -470,16 +487,16 @@ export default function Day2() {
           }}
         />
 
-        {/* the plate — no plate.png asset, so it's drawn in CSS */}
-        <div
-          className="absolute rounded-[50%] bg-white"
+        {/* the plate */}
+        <img
+          src={asset("plate.png")}
+          alt=""
+          draggable={false}
+          className="absolute select-none"
           style={{
             left: `${PLATE.left}%`,
             top: `${PLATE.top}%`,
             width: `${PLATE.width}%`,
-            height: `${PLATE.height}%`,
-            boxShadow:
-              "inset 0 0 0 1.4% #e9e4d8, inset 0 -0.6% 1.2% rgba(0,0,0,.12), 0 1% 1.4% rgba(0,0,0,.18)",
           }}
         />
 
@@ -514,6 +531,7 @@ export default function Day2() {
               dragActive={dragActive}
               registerNode={registerNode}
               snap={snapFor(item.id)}
+              atRest={isSettled(item.id, pos[item.id])}
               dev={dev}
             />
           ))}

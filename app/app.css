@@ -272,9 +272,7 @@ body {
   }
 }
 
-/* day2 tray — grow + wiggle an item on grab. dnd-kit clones the dragged
-   node into a top-layer popover flagged [data-dnd-dragging], so React state
-   only reaches the hidden original; CSS is what styles the visible clone. */
+/* day2 tray */
 .day2-grow {
   transform-origin: center;
 }
@@ -299,11 +297,7 @@ body {
   }
 }
 
-/* day2 tabletop — the placemat behind the tray: a teal diamond band on top
-   (::before), a horizontal-striped runner through the middle (the base
-   layer, darkening toward the bottom like the reference photo's lighting),
-   and a navy diamond band at the bottom (::after). No background asset
-   exists for this, so it's CSS. */
+/* day2 tabletop */
 .day2-tabletop {
   background-color: #5f97c0;
   background-image:
