@@ -14,54 +14,80 @@ type Item = {
 	id: string;
 	src: string;
 	width: number; // % of stage width; height follows the image's aspect ratio
-	flipX?: boolean; // mirror left/right (reflect across the y-axis)
-	flipY?: boolean; // mirror top/bottom (reflect across the x-axis)
+	startRotate?: number;
 };
-// One full valid layout: item id -> resting spot, % of the 9:16 stage.
+// One full valid layout: item id -> resting spot, % of the 1440x1024 stage.
 type Board = Record<string, Pos>;
 
 // Filenames have spaces; encodeURI turns them into %20 while leaving "/" alone.
 const asset = (file: string) => encodeURI(`/day3/${file}`);
 
-// The 4 recessed compartments, top -> bottom, as % of the 9:16 stage.
-const SHELVES = [
-	{ top: 4.5, height: 16.75 },
-	{ top: 23.9, height: 10.4 },
-	{ top: 37.0, height: 19.6 },
-	{ top: 59.5, height: 34.9 },
-];
+const MIDDLE_LOCKER_FRAMES = [
+	"middle locker (1).png",
+	"middle locker (2) slightly open.png",
+	"middle locker (3) fully open.png",
+] as const;
+const RIGHT_LOCKER_FRAMES = [
+	"right locker (1).png",
+	"right locker (2) slightly open.png",
+	"right locker (3) fully open.png",
+] as const;
 
 // Back -> front (array order = z-order). All units are % of the stage.
 const ITEMS: Item[] = [
-	{ id: "towel", src: "towel.png", width: 14.88 },
-	{ id: "shirt-top", src: "shirt top.png", width: 41.83 },
-	{ id: "shirt-middle", src: "shirt middle.png", width: 41.83 },
-	{ id: "shirt-bottom", src: "shirt bottom.png", width: 41.83 },
-	{ id: "sneaker-l", src: "sneakers left.png", width: 32.19 },
-	{ id: "sneaker-r", src: "sneakers right.png", width: 32.19 },
-	{ id: "bag", src: "gym bag.png", width: 55.37 },
-	{ id: "mat", src: "yoga mat.png", width: 11.55 },
-	{ id: "arnis-l", src: "arnis stick left.png", width: 2.7 },
-	{ id: "arnis-r", src: "arnis stick right.png", width: 2.7 },
-	{ id: "racket", src: "tennis racket.png", width: 25.35 },
-	{ id: "barbell", src: "barbell.png", width: 11.01 },
-	{ id: "jug", src: "water jug.png", width: 11.47 },
-	{ id: "kettlebell", src: "kettlebell.png", width: 18.9 },
+	{ id: "towel", src: "towel.png", width: 7.569 },
+	{ id: "shirt-top", src: "shirt top.png", width: 10.694 },
+	{ id: "shirt-middle", src: "shirt middle.png", width: 11.042 },
+	{ id: "shirt-bottom", src: "shirt bottom.png", width: 11.042 },
+	{ id: "sneaker-l", src: "sneakers left.png", width: 9.236 },
+	{
+		id: "sneaker-r",
+		src: "sneakers right.png",
+		width: 9.236,
+		startRotate: 270,
+	},
+	{ id: "bag", src: "gym bag.png", width: 17.083 },
+	{ id: "mat", src: "yoga mat.png", width: 5 },
+	{ id: "arnis-l", src: "arnis stick left.png", width: 1.111 },
+	{ id: "arnis-r", src: "arnis stick right.png", width: 1.111 },
+	{ id: "racket", src: "tennis racket.png", width: 7.708 },
+	{ id: "barbell", src: "barbell.png", width: 3.819, startRotate: 90 },
+	{ id: "jug", src: "water jug.png", width: 3.889 },
+	{ id: "kettlebell", src: "kettlebell.png", width: 6.389 },
 ];
 
-// Every valid layout — none is more "correct" than another. Paste each
-// ?dev=1 panel's "Copy" output here as one array entry.
+// Every valid layout — none is more "correct" than another.
 const SOLUTIONS = solutionsData as Board[];
+const INTERCHANGEABLE: readonly (readonly string[])[] = [
+	["sneaker-l", "sneaker-r"],
+	["arnis-l", "arnis-r"],
+];
+
+// Day 3 - (2): the supplied messy arrangement across the two open lockers.
+const START_POSITIONS: Board = {
+	towel: { left: 53.119, top: 30.371 },
+	"shirt-top": { left: 43.186, top: 75.488 },
+	"shirt-middle": { left: 65.259, top: 79.199 },
+	"shirt-bottom": { left: 43.259, top: 78.809 },
+	"sneaker-l": { left: 66.289, top: 65.625 },
+	"sneaker-r": { left: 47.232, top: 23.73 },
+	bag: { left: 65.994, top: 50.684 },
+	mat: { left: 40.905, top: 21.387 },
+	"arnis-l": { left: 41.64, top: 53.711 },
+	"arnis-r": { left: 46.79, top: 22.656 },
+	racket: { left: 52.162, top: 54.395 },
+	barbell: { left: 68.79, top: 68.75 },
+	jug: { left: 48.483, top: 36.23 },
+	kettlebell: { left: 77.105, top: 68.262 },
+};
 
 const SNAP = 5; // % distance within which an item clicks into its home slot
 const WIN_TOL = 0.6; // % tolerance for the solved check
 
-const REPEL_RADIUS = 16; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 0.28; // nudge magnitude per % of overlap
-const REPEL_MAX = 1.4; // % cap on a single nudge step
-
-const SHUFFLE_TRIES = 40; // candidate spots tried per item when scattering
-const SHUFFLE_MAX_OVERLAP = 0.12; // accept a spot once overlap is under ~12%
+const REPEL_RADIUS = 9; // % gap under which a nearby idle item gets nudged
+const REPEL_STRENGTH = 0.1; // nudge magnitude per % of overlap
+const REPEL_MAX = 0.4; // % cap on a single nudge step
+const LOCKER_X_SCALE = 24.722 / 23.333;
 
 // The stage-% range that keeps an item inside the viewport (positions are
 // stage-%, so we fold in the stage's on-screen offset (rect)). `h` is the
@@ -93,69 +119,114 @@ function clampToScreen(
 	};
 }
 
-type Box = { x0: number; x1: number; y0: number; y1: number };
-
-// The item's rectangle in viewport pixels (for overlap tests).
-function contentPxBox(
-	left: number,
-	top: number,
-	width: number,
-	h: number,
-	rect: DOMRect,
-): Box {
-	const pxW = (width / 100) * rect.width;
-	const pxH = (h / 100) * rect.height;
-	const x = (left / 100) * rect.width;
-	const y = (top / 100) * rect.height;
-	return { x0: x, x1: x + pxW, y0: y, y1: y + pxH };
-}
-
-// Overlap of two content boxes as a fraction of the smaller box's area.
-function overlapFrac(a: Box, b: Box): number {
-	const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0));
-	const iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
-	const inter = ix * iy;
-	if (inter <= 0) return 0;
-	const areaA = (a.x1 - a.x0) * (a.y1 - a.y0);
-	const areaB = (b.x1 - b.x0) * (b.y1 - b.y0);
-	return inter / Math.min(areaA, areaB);
-}
-
 const defaultPositions = (): Record<string, Pos> =>
 	Object.fromEntries(
-		ITEMS.map((i) => [i.id, SOLUTIONS[0]?.[i.id] ?? { left: 0, top: 0 }]),
+		ITEMS.map((i) => [i.id, START_POSITIONS[i.id] ?? { left: 0, top: 0 }]),
 	);
 
-// True if item `id` is currently resting at one of its valid spots, in any layout.
-function isSettled(id: string, p: Pos): boolean {
-	return SOLUTIONS.some((board) => {
-		const s = board[id];
+const defaultRotations = (): Record<string, number> =>
+	Object.fromEntries(ITEMS.map((i) => [i.id, i.startRotate ?? 0]));
+
+const hasFinalRotation = (item: Item, rotation: number) => {
+	const normalized = ((rotation % 360) + 360) % 360;
+	return (
+		normalized === 0 ||
+		(["mat", "arnis-l", "arnis-r", "barbell"].includes(item.id) &&
+			normalized === 180)
+	);
+};
+
+const hasSlotRotation = (item: Item, targetId: string, rotation: number) => {
+	const normalized = ((rotation % 360) + 360) % 360;
+	if (item.id.startsWith("sneaker-") && targetId.startsWith("sneaker-")) {
+		return normalized === (item.id === targetId ? 0 : 180);
+	}
+	return hasFinalRotation(item, rotation);
+};
+
+const equivalentIds = (id: string): readonly string[] =>
+	INTERCHANGEABLE.find((group) => group.includes(id)) ?? [id];
+
+const validSlots = (id: string): { targetId: string; pos: Pos }[] =>
+	SOLUTIONS.flatMap((board) =>
+		equivalentIds(id).flatMap((equivalentId) =>
+			board[equivalentId]
+				? [{ targetId: equivalentId, pos: board[equivalentId] }]
+				: [],
+		),
+	);
+
+const isAt = (p: Pos, slot: Pos, tolerance = WIN_TOL) =>
+	Math.abs(p.left - slot.left) < tolerance &&
+	Math.abs(p.top - slot.top) < tolerance;
+
+function boardMatches(
+	board: Board,
+	positions: Record<string, Pos>,
+	rotations: Record<string, number>,
+): boolean {
+	const interchangeableIds = INTERCHANGEABLE.flat();
+	const itemMatchesSlot = (itemId: string, targetId: string) => {
+		const item = ITEMS.find((candidate) => candidate.id === itemId);
 		return (
-			s &&
-			Math.abs(p.left - s.left) < WIN_TOL &&
-			Math.abs(p.top - s.top) < WIN_TOL
+			item &&
+			isAt(positions[itemId], board[targetId]) &&
+			hasSlotRotation(item, targetId, rotations[itemId] ?? 0)
 		);
-	});
+	};
+	return (
+		ITEMS.every(
+			(item) =>
+				interchangeableIds.includes(item.id) ||
+				itemMatchesSlot(item.id, item.id),
+		) &&
+		INTERCHANGEABLE.every(
+			([a, b]) =>
+				(itemMatchesSlot(a, a) && itemMatchesSlot(b, b)) ||
+				(itemMatchesSlot(a, b) && itemMatchesSlot(b, a)),
+		)
+	);
+}
+
+// True if an item is resting in a valid interchangeable slot and orientation.
+function isSettled(item: Item, p: Pos, rotation: number): boolean {
+	return validSlots(item.id).some(
+		(slot) =>
+			isAt(p, slot.pos) && hasSlotRotation(item, slot.targetId, rotation),
+	);
 }
 
 function DraggableItem({
 	item,
 	pos,
-	width,
+	rotation,
 	dragActive,
 	registerNode,
+	onRotate,
 }: {
 	item: Item;
 	pos: Pos;
-	width: number;
+	rotation: number;
 	dragActive: boolean;
-	registerNode: (id: string, node: HTMLDivElement | null) => void;
+	registerNode: (id: string, node: HTMLButtonElement | null) => void;
+	onRotate: (id: string) => void;
 }) {
 	const { ref, isDragging, isDropping } = useDraggable({ id: item.id });
-	const flip = `scaleX(${item.flipX ? -1 : 1}) scaleY(${item.flipY ? -1 : 1})`;
+	const lastTap = useRef(0);
+	const transform = `rotate(${rotation}deg)`;
 	const active = isDragging || isDropping;
+	const handleTap = () => {
+		const now = performance.now();
+		if (lastTap.current > 0 && now - lastTap.current <= 320) {
+			lastTap.current = 0;
+			onRotate(item.id);
+			return;
+		}
+		lastTap.current = now;
+	};
 	return (
-		<div
+		<button
+			type="button"
 			ref={(node) => {
 				ref(node);
 				registerNode(item.id, node);
@@ -164,7 +235,7 @@ function DraggableItem({
 			style={{
 				left: `${pos.left}%`,
 				top: `${pos.top}%`,
-				width: `${width}%`,
+				width: `${item.width}%`,
 				touchAction: "none", // let dnd-kit own the gesture on touch screens
 				zIndex: active ? 50 : 1,
 				// Glide only when some OTHER item is being dragged (so repel pushes ease).
@@ -174,20 +245,35 @@ function DraggableItem({
 						? "left 120ms ease-out, top 120ms ease-out"
 						: "none",
 			}}
+			aria-label={`${item.id.replaceAll("-", " ")}. Double tap to rotate.`}
+			onClick={handleTap}
+			onKeyDown={(event) => {
+				if (event.key === "Enter" || event.key.toLowerCase() === "r") {
+					event.preventDefault();
+					onRotate(item.id);
+				}
+			}}
 		>
-			{/* .day3-grow is scaled while dragging via CSS (app.css) so the grow
-          survives dnd-kit cloning the node into a popover overlay. Flip stays
-          on the img so it does not fight dnd-kit's transform. */}
+			{/* Keep drag growth and locker-width correction on separate wrappers
+			    so neither fights the item's rotation transform. */}
 			<div className="day3-grow w-full">
-				<img
-					src={asset(item.src)}
-					alt=""
-					draggable={false}
-					className="w-full select-none"
-					style={{ transform: flip }}
-				/>
+				<div
+					className="w-full"
+					style={{
+						transform: `scaleX(${LOCKER_X_SCALE})`,
+						transformOrigin: "left center",
+					}}
+				>
+					<img
+						src={asset(item.src)}
+						alt=""
+						draggable={false}
+						className="w-full select-none"
+						style={{ transform }}
+					/>
+				</div>
 			</div>
-		</div>
+		</button>
 	);
 }
 
@@ -195,8 +281,8 @@ export default function Day3() {
 	const stageRef = useRef<HTMLDivElement>(null);
 	// Actual rendered <img> nodes, so item height can be read from the DOM
 	// (real aspect ratio) instead of a hand-maintained ASPECT table.
-	const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-	const registerNode = (id: string, node: HTMLDivElement | null) => {
+	const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+	const registerNode = (id: string, node: HTMLButtonElement | null) => {
 		itemRefs.current[id] = node;
 	};
 	const heightPct = (id: string, rect: DOMRect) => {
@@ -204,41 +290,49 @@ export default function Day3() {
 		return (h / rect.height) * 100;
 	};
 	const [pos, setPos] = useState<Record<string, Pos>>(defaultPositions);
+	const [rotations, setRotations] =
+		useState<Record<string, number>>(defaultRotations);
 	const [playing, setPlaying] = useState(false);
 	const [dragActive, setDragActive] = useState(false); // some item is being dragged
 	const [finished, setFinished] = useState(false); // win popup dismissed
-	// dev mode: add ?dev=1 to the URL for the tweak panel (live x/y, editable
-	// width, Copy button) with snapping and repel disabled so items can be
-	// dragged to exact spots — e.g. to capture alternate valid layouts.
-	const [dev, setDev] = useState(false);
-	const [widths, setWidths] = useState<Record<string, number>>(() =>
-		Object.fromEntries(ITEMS.map((i) => [i.id, i.width])),
-	);
+	const [introFrame, setIntroFrame] = useState(0);
+	const [introDone, setIntroDone] = useState(false);
 	useEffect(() => {
-		setDev(new URLSearchParams(window.location.search).has("dev"));
+		[
+			...MIDDLE_LOCKER_FRAMES,
+			...RIGHT_LOCKER_FRAMES,
+			...ITEMS.map((i) => i.src),
+		].forEach((file) => {
+			const image = new Image();
+			image.src = asset(file);
+		});
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+			setIntroFrame(2);
+			setIntroDone(true);
+			return;
+		}
+		const slightlyOpen = window.setTimeout(() => setIntroFrame(1), 500);
+		const fullyOpen = window.setTimeout(() => setIntroFrame(2), 800);
+		const interactive = window.setTimeout(() => setIntroDone(true), 1400);
+		return () => {
+			window.clearTimeout(slightlyOpen);
+			window.clearTimeout(fullyOpen);
+			window.clearTimeout(interactive);
+		};
 	}, []);
 
-	const round = (n: number) => Math.round(n * 10) / 10;
-
-	// Copies the current arrangement as one SOLUTIONS board entry.
-	function copyValues() {
-		const lines = ITEMS.map((it) => {
-			const p = pos[it.id];
-			return `    "${it.id}": { left: ${round(p.left)}, top: ${round(p.top)} },`;
-		}).join("\n");
-		navigator.clipboard?.writeText(`  {\n${lines}\n  },`);
-	}
-
 	const isSolved = SOLUTIONS.some((board) =>
-		ITEMS.every((i) => {
-			const s = board[i.id];
-			return (
-				s &&
-				Math.abs(pos[i.id].left - s.left) < WIN_TOL &&
-				Math.abs(pos[i.id].top - s.top) < WIN_TOL
-			);
-		}),
+		boardMatches(board, pos, rotations),
 	);
+
+	function rotateItem(id: string) {
+		setPlaying(true);
+		setFinished(false);
+		setRotations((prev) => ({
+			...prev,
+			[id]: ((prev[id] ?? 0) + 90) % 360,
+		}));
+	}
 
 	function handleDragEnd(event: {
 		operation: {
@@ -254,39 +348,41 @@ export default function Day3() {
 		if (canceled || !source || !rect) return;
 
 		const id = String(source.id);
-		if (!ITEMS.some((i) => i.id === id)) return;
+		const item = ITEMS.find((candidate) => candidate.id === id);
+		if (!item) return;
 
 		setPos((prev) => {
 			let left = prev[id].left + (operation.transform.x / rect.width) * 100;
 			let top = prev[id].top + (operation.transform.y / rect.height) * 100;
-			// soft-snap into a valid slot when released close to one (off in dev mode)
-			if (!dev) {
-				const hit = SOLUTIONS.map((b) => b[id]).find(
-					(s) =>
-						s && Math.abs(left - s.left) < SNAP && Math.abs(top - s.top) < SNAP,
-				);
-				if (hit) {
-					left = hit.left;
-					top = hit.top;
-				}
+			// Snap only when both the position and slot-specific orientation are valid.
+			const hit = validSlots(id).find(
+				(slot) =>
+					isAt({ left, top }, slot.pos, SNAP) &&
+					hasSlotRotation(item, slot.targetId, rotations[id] ?? 0) &&
+					!equivalentIds(id).some(
+						(otherId) => otherId !== id && isAt(prev[otherId], slot.pos),
+					),
+			);
+			if (hit) {
+				left = hit.pos.left;
+				top = hit.pos.top;
 			}
 			// keep on-screen (can roam the side margins, not off the viewport edge)
 			return {
 				...prev,
-				[id]: clampToScreen(left, top, widths[id], heightPct(id, rect), rect),
+				[id]: clampToScreen(left, top, item.width, heightPct(id, rect), rect),
 			};
 		});
 	}
 
 	// Magnetic repel: while dragging, gently push nearby idle items away so they
-	// read as solid objects, not stacking stickers. Off in dev for exact placing.
+	// read as solid objects, not stacking stickers.
 	function handleDragMove(event: {
 		operation: {
 			source: { id: string | number } | null;
 			transform: { x: number; y: number };
 		};
 	}) {
-		if (dev) return;
 		const src = event.operation.source;
 		const rect = stageRef.current?.getBoundingClientRect();
 		if (!src || !rect) return;
@@ -302,7 +398,7 @@ export default function Day3() {
 				if (it.id === id) continue;
 				const o = prev[it.id];
 				// don't disturb an item already snapped in a valid spot
-				if (isSettled(it.id, o)) continue;
+				if (isSettled(it, o, rotations[it.id] ?? 0)) continue;
 				const vx = o.left - dx;
 				const vy = o.top - dy;
 				const dist = Math.hypot(vx, vy);
@@ -314,7 +410,7 @@ export default function Day3() {
 					next[it.id] = clampToScreen(
 						o.left + (vx / dist) * push,
 						o.top + (vy / dist) * push,
-						widths[it.id],
+						it.width,
 						heightPct(it.id, rect),
 						rect,
 					);
@@ -325,92 +421,18 @@ export default function Day3() {
 		});
 	}
 
-	// Scatter items anywhere on the SCREEN (cabinet or side margins), trying to
-	// keep overlaps low — some touching is fine, big pile-ups are not.
-	function shuffle() {
-		const rect = stageRef.current?.getBoundingClientRect();
-		if (!rect) return;
-		setPlaying(true);
-		setFinished(false);
-
-		const area = (i: Item) => widths[i.id] * heightPct(i.id, rect);
-		const order = [...ITEMS].sort((a, b) => area(b) - area(a)); // big ones first
-		const placed: Box[] = [];
-		const next: Record<string, Pos> = {};
-
-		for (const item of order) {
-			const w = widths[item.id];
-			const h = heightPct(item.id, rect);
-			const bnd = screenBounds(w, h, rect);
-			let best: Pos | null = null;
-			let bestBox: Box | null = null;
-			let bestOverlap = Infinity;
-			for (let n = 0; n < SHUFFLE_TRIES; n++) {
-				const left = bnd.minLeft + Math.random() * (bnd.maxLeft - bnd.minLeft);
-				const top = bnd.minTop + Math.random() * (bnd.maxTop - bnd.minTop);
-				const box = contentPxBox(left, top, w, h, rect);
-				const ov = placed.reduce((m, p) => Math.max(m, overlapFrac(box, p)), 0);
-				if (ov < bestOverlap) {
-					best = { left, top };
-					bestBox = box;
-					bestOverlap = ov;
-				}
-				if (ov <= SHUFFLE_MAX_OVERLAP) break; // good enough, stop trying
-			}
-			if (best && bestBox) {
-				placed.push(bestBox);
-				next[item.id] = best;
-			}
-		}
-		setPos(next);
-	}
-
-	// Scatter once on load. Placement reads item heights off the DOM, and an
-	// <img> measures 0 until it loads — so wait for every height, then shuffle.
-	// ponytail: rAF poll instead of per-image onLoad counting; covers cached
-	// images (whose load event can fire before React attaches the handler) too.
-	// Items stay invisible (but laid out, so they still measure) until then —
-	// otherwise the tidy starting layout flashes for a frame or two.
-	const autoShuffled = useRef(false);
-	useEffect(() => {
-		let raf = 0;
-		const deadline = performance.now() + 2500; // never leave items hidden
-		const tick = () => {
-			if (autoShuffled.current) return;
-			const rect = stageRef.current?.getBoundingClientRect();
-			const loaded = rect && ITEMS.every((i) => heightPct(i.id, rect) > 0);
-			if (loaded || performance.now() > deadline) {
-				autoShuffled.current = true;
-				shuffle();
-				return;
-			}
-			raf = requestAnimationFrame(tick);
-		};
-		raf = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(raf);
-	}, []);
-
 	return (
 		<main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[#7c62c6]">
-			{/* dev-only controls (?dev=1), in the letterbox out of the way */}
-			{dev && (
-				<div className="absolute left-3 top-3 z-[60] flex gap-2">
-					<button
-						type="button"
-						onClick={shuffle}
-						className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
-					>
-						Shuffle
-					</button>
-					<button
-						type="button"
-						onClick={() => setPos(defaultPositions())}
-						className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
-					>
-						Reset
-					</button>
-				</div>
-			)}
+			<div
+				aria-hidden="true"
+				className="pointer-events-none absolute inset-0 opacity-[0.38]"
+				style={{
+					backgroundImage: `url("${asset("middle locker (1).png")}")`,
+					backgroundPosition:
+						"calc(50% + min(0.764vw, 1.074dvh)) calc(50% - min(1.146vw, 1.611dvh))",
+					backgroundSize: "min(24.722vw, 34.753dvh) min(50vw, 70.313dvh)",
+				}}
+			/>
 
 			{playing && isSolved && !finished && (
 				<div className="day3-backdrop absolute inset-0 z-65 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
@@ -436,105 +458,81 @@ export default function Day3() {
 				</div>
 			)}
 
-			{/* Aspect-locked stage: height picks whichever of the viewport's
-          dimensions is the binding constraint, so it never overflows either
-          axis. aspect-ratio then derives the width. Same layout everywhere. */}
+			{/* Aspect-locked to the supplied 1440x1024 Day 3 artwork. */}
 			<div
 				ref={stageRef}
-				className="relative aspect-[9/16]"
-				style={{ height: "min(100dvh, 177.78vw)" }}
+				className="relative aspect-[45/32]"
+				style={{ width: "min(100vw, 140.625dvh)" }}
 			>
-				{/* neighbor-locker seams */}
-				<div className="absolute inset-y-0 left-[13%] w-px bg-[#4d3a86]/60" />
-				<div className="absolute inset-y-0 right-[13%] w-px bg-[#4d3a86]/60" />
+				<img
+					src={asset("left locker.png")}
+					alt=""
+					draggable={false}
+					className="absolute left-[13.681%] top-[13.281%] h-[73.438%] w-[24.722%] select-none"
+				/>
 
-				{/* recessed shelves */}
-				{SHELVES.map((s) => (
-					<div
-						key={s.top}
-						className="absolute left-[23%] w-[56%] bg-[#6a4dad]"
-						style={{
-							top: `${s.top}%`,
-							height: `${s.height}%`,
-							// hard-edged inner shadow: solid band on left + top, no blur
-							boxShadow: "inset 7px 7px 0 rgba(0,0,0,.22)",
-						}}
+				<div className="absolute left-[38.403%] top-[13.281%] h-[70.215%] w-[24.722%]">
+					<img
+						src={asset(MIDDLE_LOCKER_FRAMES[introFrame])}
+						alt=""
+						draggable={false}
+						className="absolute inset-0 h-full w-full select-none"
 					/>
-				))}
+					{introDone && (
+						<>
+							<div className="absolute left-[6.548%] top-[2.503%] h-[50.487%] w-[87.202%] bg-[#583F99]" />
+							<div className="absolute left-[6.548%] top-[2.503%] h-[1.947%] w-[87.202%] bg-[#443175]" />
+							<div className="absolute left-[6.548%] top-[2.503%] h-[50.487%] w-[4.167%] bg-[#443175]" />
+							<div className="absolute left-[6.548%] top-[56.05%] h-[41.17%] w-[87.202%] bg-[#583F99]" />
+							<div className="absolute left-[6.548%] top-[56.05%] h-[41.17%] w-[2.976%] bg-[#443175]" />
+						</>
+					)}
+				</div>
+
+				<div className="absolute left-[63.125%] top-[13.281%] h-[73.438%] w-[24.722%] overflow-hidden">
+					<img
+						src={asset(RIGHT_LOCKER_FRAMES[introFrame])}
+						alt=""
+						draggable={false}
+						className="absolute inset-0 h-full w-full select-none"
+					/>
+					{introDone && (
+						<>
+							<div className="absolute left-[5.95%] top-[50%] h-[43.5%] w-[80.06%] bg-[#583F99]" />
+							<div className="absolute left-[5.952%] top-[50%] h-[43%] w-[0.298%] bg-[#7C63BF]" />
+							<div className="absolute left-[6.25%] top-[50%] h-[43%] w-[0.298%] bg-[#594491]" />
+							<div className="absolute left-[6.548%] top-[50%] h-[43%] w-[3.571%] bg-[#443175]" />
+							<div className="absolute left-[10.119%] top-[50%] h-[43%] w-[0.595%] bg-[#49347E]" />
+						</>
+					)}
+				</div>
 
 				{/* draggable items */}
-				<DragDropProvider
-					onDragStart={() => setDragActive(true)}
-					onDragMove={handleDragMove}
-					onDragEnd={handleDragEnd}
-				>
-					{/* Hidden, not unmounted, until the first scatter: the images must
-					    stay in layout so they load and report their heights. */}
-					<div
-						className="transition-opacity duration-200"
-						style={{ opacity: playing ? 1 : 0 }}
+				{introDone && (
+					<DragDropProvider
+						onDragStart={() => {
+							setPlaying(true);
+							setDragActive(true);
+						}}
+						onDragMove={handleDragMove}
+						onDragEnd={handleDragEnd}
 					>
-						{ITEMS.map((item) => (
-							<DraggableItem
-								key={item.id}
-								item={item}
-								pos={pos[item.id]}
-								width={widths[item.id]}
-								dragActive={dragActive}
-								registerNode={registerNode}
-							/>
-						))}
-					</div>
-				</DragDropProvider>
-			</div>
-
-			{/* dev-only tweak panel (?dev=1): live x/y, editable width, snap + repel
-			    disabled so items can be dragged to exact spots. */}
-			{dev && (
-				<div className="fixed right-2 top-2 z-[70] max-h-[96dvh] w-60 overflow-auto rounded-lg bg-black/75 p-2 font-mono text-[11px] leading-tight text-white shadow-xl backdrop-blur">
-					<div className="mb-1.5 flex items-center justify-between">
-						<span className="font-semibold text-emerald-300">
-							dev · drag to fit
-						</span>
-						<button
-							type="button"
-							onClick={copyValues}
-							className="rounded bg-emerald-500/80 px-2 py-0.5 font-semibold hover:bg-emerald-500"
-						>
-							Copy
-						</button>
-					</div>
-					{ITEMS.map((it) => (
-						<div
-							key={it.id}
-							className="mb-1 flex items-center gap-1.5 border-b border-white/10 pb-1"
-						>
-							<span className="w-14 shrink-0 truncate text-sky-300">
-								{it.id}
-							</span>
-							<span className="w-14 shrink-0 tabular-nums text-white/70">
-								{round(pos[it.id].left)},{round(pos[it.id].top)}
-							</span>
-							<label className="ml-auto flex items-center gap-1">
-								w
-								<input
-									type="number"
-									step={0.5}
-									value={widths[it.id]}
-									onChange={(e) =>
-										setWidths((w) => ({
-											...w,
-											[it.id]: Number(e.target.value),
-										}))
-									}
-									className="w-14 rounded bg-white/10 px-1 py-0.5 text-white outline-none focus:bg-white/20"
+						<div>
+							{ITEMS.map((item) => (
+								<DraggableItem
+									key={item.id}
+									item={item}
+									pos={pos[item.id]}
+									rotation={rotations[item.id] ?? 0}
+									dragActive={dragActive}
+									registerNode={registerNode}
+									onRotate={rotateItem}
 								/>
-							</label>
+							))}
 						</div>
-					))}
-					<p className="mt-1 text-white/50">x,y = image corner (% of stage)</p>
-				</div>
-			)}
+					</DragDropProvider>
+				)}
+			</div>
 		</main>
 	);
 }
