@@ -4,7 +4,7 @@ import solutionsData from "./day3.solutions.json";
 
 export function meta() {
 	return [
-		{ title: "Day 3 — Locker" },
+		{ title: "Day 3 - Locker" },
 		{ name: "description", content: "Tidy the gym locker." },
 	];
 }
@@ -34,22 +34,19 @@ const SHELVES = [
 // Back -> front (array order = z-order). All units are % of the stage.
 const ITEMS: Item[] = [
 	{ id: "towel", src: "towel.png", width: 14.88 },
-	{ id: "clothes", src: "clothes.png", width: 41.83 },
-	{ id: "sneaker-l", src: "sneaker.png", width: 32.19 },
-	{
-		id: "sneaker-r",
-		src: "sneaker.png",
-		width: 32.19,
-		flipX: true,
-		flipY: true,
-	},
+	{ id: "shirt-top", src: "shirt top.png", width: 41.83 },
+	{ id: "shirt-middle", src: "shirt middle.png", width: 41.83 },
+	{ id: "shirt-bottom", src: "shirt bottom.png", width: 41.83 },
+	{ id: "sneaker-l", src: "sneakers left.png", width: 32.19 },
+	{ id: "sneaker-r", src: "sneakers right.png", width: 32.19 },
 	{ id: "bag", src: "gym bag.png", width: 55.37 },
 	{ id: "mat", src: "yoga mat.png", width: 11.55 },
-	{ id: "arnis", src: "arnis stick.png", width: 5.27 },
+	{ id: "arnis-l", src: "arnis stick left.png", width: 2.7 },
+	{ id: "arnis-r", src: "arnis stick right.png", width: 2.7 },
 	{ id: "racket", src: "tennis racket.png", width: 25.35 },
 	{ id: "barbell", src: "barbell.png", width: 11.01 },
 	{ id: "jug", src: "water jug.png", width: 11.47 },
-	{ id: "kettlebell", src: "weights.png", width: 18.9 },
+	{ id: "kettlebell", src: "kettlebell.png", width: 18.9 },
 ];
 
 // Every valid layout — none is more "correct" than another. Paste each
@@ -424,7 +421,7 @@ export default function Day3() {
 						<h2 className="text-3xl font-extrabold sm:text-4xl">Excellent!</h2>
 						<p className="mt-5 text-base leading-8 sm:text-lg sm:leading-9">
 							Now with both a strong mind and enduring body, you are sure to win
-							against any physical trials fate puts in your way—be it long
+							against any physical trials fate puts in your way, be it long
 							E-Jeep queues, unexpected heavy lifting, multiple flights of
 							stairs, or the occasional run from Bellarmine to SEC Building.
 						</p>
