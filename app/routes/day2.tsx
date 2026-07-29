@@ -1,7 +1,9 @@
 import { configurator, Modifier } from "@dnd-kit/abstract";
 import { DragDropProvider, useDraggable } from "@dnd-kit/react";
+import type { MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import "./day2.css";
 import initialData from "./day2.initial.json";
 import solutionsData from "./day2.solutions.json";
 
@@ -26,7 +28,7 @@ type Board = Record<string, Pos>;
 
 const asset = (file: string) => encodeURI(`/day2/${file}`);
 
-const TRAY = { left: 12.85, top: 14.16, width: 73.26 };
+const TRAY = { left: 12.85, top: 14.16, width: 73.96 };
 const PLATE = { left: 33.26, top: 22.9, width: 32.85 };
 
 const FIXED: FixedItem[] = [
@@ -81,6 +83,9 @@ const REPEL_MAX = 0.8;
 
 const SHUFFLE_TRIES = 40;
 const SHUFFLE_MAX_OVERLAP = 0.12;
+
+const ENTER_MS = 750;
+const EXIT_MS = 650;
 
 function screenBounds(width: number, h: number, rect: DOMRect) {
   const vw = typeof window !== "undefined" ? window.innerWidth : rect.width;
@@ -249,6 +254,7 @@ function DraggableItem({
 }
 
 export default function Day2() {
+  const navigate = useNavigate();
   const stageRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const registerNode = (id: string, node: HTMLDivElement | null) => {
@@ -261,6 +267,21 @@ export default function Day2() {
   const [pos, setPos] = useState<Record<string, Pos>>(defaultPositions);
   const [dragActive, setDragActive] = useState(false);
   const [finished, setFinished] = useState(false);
+  // tray slide in on mount, slide out (rightward, same direction) on level exit
+  const [stagePhase, setStagePhase] = useState<"enter" | "idle" | "exit">(
+    "enter",
+  );
+  useEffect(() => {
+    const t = setTimeout(() => setStagePhase("idle"), ENTER_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  function handleNextLevel(e: MouseEvent) {
+    e.preventDefault();
+    setFinished(true);
+    setStagePhase("exit");
+    setTimeout(() => navigate("/day3"), EXIT_MS);
+  }
   // dev mode: add ?dev=1 to the URL for the tweak panel (live x/y, editable
   // width, Copy button) with the hover-lock and repel disabled so items can
   // be dragged to exact spots — e.g. to capture alternate valid layouts.
@@ -453,7 +474,7 @@ export default function Day2() {
             </p>
             <Link
               to="/day3"
-              onClick={() => setFinished(true)}
+              onClick={handleNextLevel}
               className="mt-8 inline-block rounded-xl bg-[#9d9d9d] px-10 py-3 text-lg transition hover:bg-[#8b8b8b]"
             >
               Next Level ↓
@@ -468,7 +489,13 @@ export default function Day2() {
 			    (mirrors day3's height-driven version of the same trick). */}
       <div
         ref={stageRef}
-        className="day2-stage relative aspect-[1440/1024]"
+        className={`day2-stage relative aspect-[1440/1024] ${
+          stagePhase === "enter"
+            ? "day2-stage-enter"
+            : stagePhase === "exit"
+              ? "day2-stage-exit"
+              : ""
+        }`}
         style={{ width: "min(100dvw, 140.63vh)" }}
       >
         {/* tabletop behind the tray */}
