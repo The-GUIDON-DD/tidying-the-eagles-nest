@@ -1,5 +1,4 @@
 import {
-  animate,
   createScope,
   createTimeline,
   cubicBezier,
@@ -28,6 +27,12 @@ export default function Home() {
           duration: 750,
           ease: "outElastic(1,0.5)",
         })
+        .add("#wing", {
+          translateX: ["200vw", "-200vw"],
+          translateY: ["200vh", "-200vh"],
+          duration: 3500,
+          ease: "linear",
+        })
         .add(
           "#plume",
           {
@@ -48,11 +53,11 @@ export default function Home() {
   return (
     <main
       ref={root}
-      className="h-screen w-screen max-h-screen max-w-screen bg-radial from-[#5d3e9e] from-25% to-[#1c2a5e] to-90% overflow-clip"
+      className="h-screen w-screen max-h-screen max-w-screen bg-radial from-[#5d3e9e] from-25% to-[#1c2a5e] to-90% overflow-clip z-5"
     >
       <div
         id="menu-container"
-        className="w-full h-full overflow-clip grid grid-cols-[4fr_fit-content(75ch)] gap-y-12 grid-rows-[3em_3em_3em_3em_1fr] pt-20 pr-20 fixed"
+        className="w-full h-full overflow-clip grid grid-cols-[4fr_fit-content(75ch)] gap-y-12 grid-rows-[3em_3em_3em_3em_1fr] pt-20 pr-20 fixed z-0"
       >
         <div className="size-full col-start-1 col-span-1 row-span-5 relative">
           <img
@@ -72,6 +77,12 @@ export default function Home() {
             src={"/menu/Plume.svg"}
             alt="Plume"
             className="w-[40vw] max-w-none absolute left-[5vw] bottom-0 origin-[center_-30px]"
+          />
+          <img
+            id="wing"
+            src={"/menu/Wing.svg"}
+            alt="Wing"
+            className="w-[150vw] max-w-none absolute left-[-100vw] bottom-0 mix-blend-multiply z-0 opacity-50"
           />
         </div>
         <p className={TEXT_CLASS}>Play</p>
