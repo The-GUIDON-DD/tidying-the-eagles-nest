@@ -1,17 +1,96 @@
+import { createScope, createTimeline, type Scope, spring } from "animejs";
+import { useEffect, useRef } from "react";
+import styles from "./home.module.css";
+
 export default function Home() {
+  const root = useRef(null);
+  const scope = useRef<Scope | null>(null);
   const TEXT_CLASS =
-    "col-start-2 text-white font-serif text-7xl text-right w-full";
+    "col-start-2 text-white font-serif text-7xl text-right mb-10";
+
+  useEffect(() => {
+    scope.current = createScope({ root }).add(() => {
+      const tl = createTimeline();
+      tl.add("#menu-content", {
+        translateY: ["100vh", 0],
+        duration: 2000,
+        ease: "outSine",
+      })
+        .label("start")
+        .add(
+          "#menu-plume",
+          {
+            y: [-80, 0],
+            rotate: ["-7deg", "5deg", 0],
+            duration: 1200,
+            ease: "inout",
+          },
+          "start-=1000",
+        )
+        .add("#menu-title", {
+          scale: [0, 1],
+          ease: spring({ bounce: 0.4, duration: 350 }),
+        })
+        .add("#menu-wing", {
+          translateY: ["150vh", "-200vh"],
+          translateX: ["150vw", "-200vw"],
+          duration: 3000,
+          ease: "linear",
+        });
+      tl.init();
+    });
+  }, []);
+
   return (
-    <div className="h-screen w-screen max-h-screen max-w-screen overflow-clip grid grid-cols-[4fr_minmax(1fr,fit-content())] gap-y-12 grid-rows-[3em_3em_3em_3em_1fr] bg-radial from-[#586d80] to-[#293b49] py-20 pr-20">
-      <img
-        src="/Nest.svg"
-        className="col-start-1 row-span-5 relative right-[6vw]"
-        alt="Envelope"
-      />
-      <p className={TEXT_CLASS}>Play</p>
-      <p className={TEXT_CLASS}>Levels</p>
-      <p className={TEXT_CLASS}>How to Play</p>
-      <p className={TEXT_CLASS}>Credits</p>
-    </div>
+    <main
+      ref={root}
+      className="h-screen w-screen max-h-screen max-w-screen bg-radial from-[#5d3e9e] from-25% to-[#1c2a5e] to-90% overflow-clip"
+    >
+      <section
+        id="menu-content"
+        className="size-full relative flex items-stretch"
+      >
+        <section className="grow relative">
+          <img
+            src={"/menu/NestGrouped.svg"}
+            alt="Nest"
+            className="h-[120%] max-w-[120%] absolute left-[-18%] bottom-[-30%]"
+          />
+          <div className="w-[70%] max-h-[90vh] max-w-[80vw] aspect-2129/2360 absolute bottom-[7%] left-0 bg-contain bg-no-repeat bg-center bg-[url('/menu/EggNotebook.svg')] flex items-center align-center">
+            <img
+              id="menu-title"
+              alt="Tidying the Eagles' Nest"
+              src={"/menu/title-card.svg"}
+              className="w-[55%] min-w-[30vw] relative left-[22%]"
+            />
+          </div>
+          <img
+            alt="Stick Pad"
+            src={"/menu/StickPad.svg"}
+            className="w-[36%] absolute right-[12%] bottom-[12%]"
+          />
+          <img
+            id="menu-plume"
+            alt="Plume"
+            src={"/menu/Plume.svg"}
+            className="w-[60%] absolute left-0 bottom-[-9%] origin-[center,-50px]"
+          />
+        </section>
+        <section className="pt-[10%] pr-[5%]">
+          <p id="menu-play" className={`${TEXT_CLASS} ${styles.play}`}>
+            Play
+          </p>
+          <img
+            id="menu-wing"
+            alt="Wing"
+            src={"/menu/Wing.svg"}
+            className={`${styles.wing} w-[170vw] max-w-none fixed bottom-[-20vh] left-[-80vw] opacity-50 mix-blend-color-burn`}
+          />
+          <p className={TEXT_CLASS}>Levels</p>
+          <p className={TEXT_CLASS}>How to Play</p>
+          <p className={TEXT_CLASS}>Credits</p>
+        </section>
+      </section>
+    </main>
   );
 }

@@ -1,0 +1,23 @@
+@keyframes wingFly {
+  0% {
+    transform: translate(150vw, 150vh);
+  }
+
+  100% {
+    transform: translate(-200vw, -200vh);
+  }
+}
+
+#menu-wing,
+.wing {
+  transform: translate(150vw, 150vh);
+  z-index: 10;
+}
+
+.play {
+  z-index: 50;
+}
+
+.play:hover ~ .wing {
+  animation: 3s linear 500ms 1 normal backwards running wingFly;
+}
