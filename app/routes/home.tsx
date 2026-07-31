@@ -1,95 +1,96 @@
-import {
-  createScope,
-  createTimeline,
-  cubicBezier,
-  type Scope,
-  utils,
-} from "animejs";
+import { createScope, createTimeline, type Scope, spring } from "animejs";
 import { useEffect, useRef } from "react";
+import styles from "./home.module.css";
 
 export default function Home() {
   const root = useRef(null);
   const scope = useRef<Scope | null>(null);
-  const TEXT_CLASS = "col-start-2 text-white font-serif text-7xl text-right";
+  const TEXT_CLASS =
+    "col-start-2 text-white font-serif text-7xl text-right mb-10";
 
   useEffect(() => {
-    scope.current = createScope({ root }).add((self) => {
+    scope.current = createScope({ root }).add(() => {
       const tl = createTimeline();
-      tl.label("start")
-        .add("#menu-container", {
-          bottom: ["-300vh", "0vh"],
-          duration: 2000,
-          ease: cubicBezier(0.1, 0.7, 0.5, 1),
-        })
-        .label("enternest")
-        .add("#title-card", {
-          scale: [0, 1],
-          duration: 750,
-          ease: "outElastic(1,0.5)",
-        })
-        .add("#wing", {
-          translateX: ["200vw", "-200vw"],
-          translateY: ["200vh", "-200vh"],
-          duration: 3500,
-          ease: "linear",
-        })
+      tl.add("#menu-content", {
+        translateY: ["100vh", 0],
+        duration: 2000,
+        ease: "outSine",
+      })
+        .label("start")
         .add(
-          "#plume",
+          "#menu-plume",
           {
-            y: [-50, 0],
+            y: [-80, 0],
+            rotate: ["-7deg", "5deg", 0],
             duration: 1200,
-            rotate: ["-5deg", "5deg", "0deg"],
-            ease: "inOut",
+            ease: "inout",
           },
-          "enternest-=1000",
-        );
-
+          "start-=1000",
+        )
+        .add("#menu-title", {
+          scale: [0, 1],
+          ease: spring({ bounce: 0.4, duration: 350 }),
+        })
+        .add("#menu-wing", {
+          translateY: ["150vh", "-200vh"],
+          translateX: ["150vw", "-200vw"],
+          duration: 3000,
+          ease: "linear",
+        });
       tl.init();
     });
-
-    return () => scope.current?.revert();
   }, []);
 
   return (
     <main
       ref={root}
-      className="h-screen w-screen max-h-screen max-w-screen bg-radial from-[#5d3e9e] from-25% to-[#1c2a5e] to-90% overflow-clip z-5"
+      className="h-screen w-screen max-h-screen max-w-screen bg-radial from-[#5d3e9e] from-25% to-[#1c2a5e] to-90% overflow-clip"
     >
-      <div
-        id="menu-container"
-        className="w-full h-full overflow-clip grid grid-cols-[4fr_fit-content(75ch)] gap-y-12 grid-rows-[3em_3em_3em_3em_1fr] pt-20 pr-20 fixed z-0"
+      <section
+        id="menu-content"
+        className="size-full relative flex items-stretch"
       >
-        <div className="size-full col-start-1 col-span-1 row-span-5 relative">
+        <section className="grow relative">
           <img
-            id="nest"
             src={"/menu/NestGrouped.svg"}
             alt="Nest"
-            className="w-[85vw] max-w-none absolute left-[-10vw] bottom-[-30vh]"
+            className="h-[120%] max-w-[120%] absolute left-[-18%] bottom-[-30%]"
+          />
+          <div className="w-[70%] max-h-[90vh] max-w-[80vw] aspect-2129/2360 absolute bottom-[7%] left-0 bg-contain bg-no-repeat bg-center bg-[url('/menu/EggNotebook.svg')] flex items-center align-center">
+            <img
+              id="menu-title"
+              alt="Tidying the Eagles' Nest"
+              src={"/menu/title-card.svg"}
+              className="w-[55%] min-w-[30vw] relative left-[22%]"
+            />
+          </div>
+          <img
+            alt="Stick Pad"
+            src={"/menu/StickPad.svg"}
+            className="w-[36%] absolute right-[12%] bottom-[12%]"
           />
           <img
-            id="title-card"
-            src={"/menu/title-card.svg"}
-            alt="Title Card"
-            className="w-[28vw] max-w-none absolute left-[11vw] bottom-[40vh]"
-          />
-          <img
-            id="plume"
-            src={"/menu/Plume.svg"}
+            id="menu-plume"
             alt="Plume"
-            className="w-[40vw] max-w-none absolute left-[5vw] bottom-0 origin-[center_-30px]"
+            src={"/menu/Plume.svg"}
+            className="w-[60%] absolute left-0 bottom-[-9%] origin-[center,-50px]"
           />
+        </section>
+        <section className="pt-[10%] pr-[5%]">
+          <p id="menu-play" className={`${TEXT_CLASS} ${styles.play}`}>
+            Play
+          </p>
           <img
-            id="wing"
-            src={"/menu/Wing.svg"}
+            id="menu-wing"
             alt="Wing"
-            className="w-[150vw] max-w-none absolute left-[-100vw] bottom-0 mix-blend-multiply z-0 opacity-50"
+            src={"/menu/Wing.svg"}
+            className={`${styles.wing} w-[170vw] max-w-none fixed bottom-[-20vh] left-[-80vw] opacity-50 mix-blend-color-burn`}
           />
-        </div>
-        <p className={TEXT_CLASS}>Play</p>
-        <p className={TEXT_CLASS}>Levels</p>
-        <p className={TEXT_CLASS}>How to Play</p>
-        <p className={TEXT_CLASS}>Credits</p>
-      </div>
+          <p className={TEXT_CLASS}>Levels</p>
+          <p className={TEXT_CLASS}>How to Play</p>
+          <p className={TEXT_CLASS}>Credits</p>
+        </section>
+      </section>
     </main>
   );
 }
