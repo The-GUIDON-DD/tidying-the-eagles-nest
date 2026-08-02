@@ -21,6 +21,8 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router": "8.0.0",
+    "react-timer-hook": "^4.0.6",
+    "remeda": "^2.39.0",
     "use-sound": "^5.0.0"
   },
   "devDependencies": {

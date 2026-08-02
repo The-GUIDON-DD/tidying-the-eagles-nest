@@ -6,8 +6,8 @@ import { useStopwatch } from "react-timer-hook";
 import { clamp, set, values } from "remeda";
 import type { ItemData, ItemState, Pos } from "../components/day1_types";
 
-const REPEL_RADIUS = 100; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 10; // nudge magnitude per % of overlap
+const REPEL_RADIUS = 175; // % gap under which a nearby idle item gets nudged
+const REPEL_STRENGTH = 7; // nudge magnitude per % of overlap
 
 function vhToPx(vh: string) {
   const percent = parseInt(vh.split("vh")[0]) * 0.01;
@@ -26,14 +26,15 @@ function clampToScreenPos(el: HTMLElement | null, pos: Pos) {
   // get global coordinates of element
   const rect = el.getBoundingClientRect();
   // only 50% of height/width should be out of screen;
-  const maxX = window.innerWidth - rect.width / 2;
-  const minX = -(rect.width / 2);
-  const maxY = window.innerHeight - rect.height / 2;
-  const minY = -(rect.height / 2);
-
   return {
-    x: clamp(pos.x, { min: minX, max: maxX }),
-    y: clamp(pos.y, { min: minY, max: maxY }),
+    x: clamp(pos.x, {
+      min: -window.innerWidth / 2,
+      max: window.innerWidth / 2,
+    }),
+    y: clamp(pos.y, {
+      min: -window.innerHeight / 2,
+      max: window.innerHeight / 2,
+    }),
     z: pos.z,
   };
 }
