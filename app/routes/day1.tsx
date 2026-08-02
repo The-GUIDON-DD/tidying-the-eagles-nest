@@ -1,15 +1,12 @@
 "use client";
 import { Feedback } from "@dnd-kit/dom";
-import { DragDropProvider, useDraggable } from "@dnd-kit/react";
-import { useEffect, useRef, useState } from "react";
+import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
+import { useState } from "react";
+import { allPass, mapValues, set, values } from "remeda";
 import type { ItemData, ItemState, Pos } from "../components/day1_types";
 
-const SNAP = 5; // % distance within which an item clicks into its home slot
-const WIN_TOL = 0.6; // % tolerance for the solved check
-
-const REPEL_RADIUS = 9; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 0.1; // nudge magnitude per % of overlap
-const REPEL_MAX = 0.4; // % cap on a single nudge step
+const REPEL_RADIUS = 300; // % gap under which a nearby idle item gets nudged
+const REPEL_STRENGTH = 10; // nudge magnitude per % of overlap
 
 function vhToPx(vh: string) {
   const percent = parseInt(vh.split("vh")[0]) * 0.01;
@@ -88,29 +85,41 @@ function defaultItemPositions() {
   return itemPositions;
 }
 
+function withinSnappingPosition(width: number, height: number, pos: Pos) {
+  return Math.abs(pos.x) <= width / 4 && Math.abs(pos.y) <= height / 4;
+}
+
 function DraggableItem({
   itemData,
   itemPos,
+  withinSnappingPosition,
 }: {
   itemData: ItemData;
   itemPos: Pos;
+  withinSnappingPosition: () => boolean;
 }) {
   const { ref: dragRef } = useDraggable({ id: `day1-${itemData.name}` });
+  const { ref: dropRef } = useDroppable({ id: `day1-${itemData.name}` });
   return (
-    <img
-      ref={dragRef}
+    <div
+      ref={(node) => {
+        dragRef(node);
+        dropRef(node);
+      }}
       id={`day1-${itemData.name}`}
-      alt={itemData.name}
-      src={itemData.image}
-      className="row-start-1 row-span-1 col-start-1 col-span-1 duration-500"
+      className="row-start-1 row-span-1 col-start-1 col-span-1 duration-500 origin-center"
       style={{
         width: itemData.width,
         transformStyle: "preserve-3d",
-        rotate: itemData.initialRotate,
-        translate: `${itemPos.x}px ${itemPos.y}px`,
+        rotate: withinSnappingPosition() ? "0deg" : itemData.initialRotate,
+        translate: withinSnappingPosition()
+          ? "0px 0px"
+          : `${itemPos.x}px ${itemPos.y}px`,
         zIndex: itemPos.z,
       }}
-    />
+    >
+      <img alt={itemData.name} src={itemData.image} className="w-full" />
+    </div>
   );
 }
 
@@ -118,17 +127,62 @@ function getItemNameFromID(itemName: string) {
   return itemName.substring("day1-".length);
 }
 
+function isSolved(pos: Pos) {
+  return pos.x === 0 && pos.y === 0;
+}
+
 export default function Level1() {
   const MAX_SCREEN_SIZE =
     "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
   const [itemPositions, setItemPositions] = useState(defaultItemPositions());
+  const [itemWinState, setItemWinState] = useState(
+    Object.fromEntries(ITEMS.map(({ name }) => [name, false])),
+  );
+
+  function solveItem(item: string) {
+    setItemPosition(item, { x: 0, y: 0, z: 0 });
+    setItemWinState(set(itemWinState, item, true));
+  }
 
   function setItemPosition(itemName: string, itemPos: Pos) {
     if (itemName in itemPositions) {
-      const positions = { ...itemPositions };
-      positions[itemName] = itemPos;
-      setItemPositions(positions);
+      setItemPositions(set(itemPositions, itemName, itemPos));
     }
+  }
+
+  function isItemInWinnableState(itemPos: Pos, itemEl: HTMLElement | null) {
+    return withinSnappingPosition(
+      itemEl?.offsetWidth || 0,
+      itemEl?.offsetHeight || 0,
+      itemPos,
+    );
+  }
+
+  function centerOfElement(el: HTMLElement) {
+    const rect = el.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+      z: 0,
+    };
+  }
+
+  function distBetweenElements(el1: HTMLElement, el2: HTMLElement) {
+    const { x: x1, y: y1 } = centerOfElement(el1);
+    const { x: x2, y: y2 } = centerOfElement(el2);
+    return Math.hypot(x1 - x2, y1 - y2);
+  }
+
+  function translateItem(item: string, diff: Pos) {
+    setItemPosition(item, {
+      x: itemPositions[item].x + diff.x,
+      y: itemPositions[item].y + diff.y,
+      z: itemPositions[item].z + diff.z,
+    });
+  }
+
+  function gameWon() {
+    return values(itemWinState).every((x) => x);
   }
 
   return (
@@ -136,21 +190,80 @@ export default function Level1() {
       className={`${MAX_SCREEN_SIZE} overflow-clip bg-radial from-[#ffad6f] to-[#bd5d44] grid grid-cols-1 grid-rows-1 place-items-center py-[10%] px-[20%]`}
     >
       <DragDropProvider
-        onDragEnd={(event) => {
-          /* Prevents items snapping back to their old position after drag */
-          // Name of item being dragged
+        onBeforeDragStart={(event) => {
           if (!event.operation.source) {
-            return;
+            return; // no item being dragged
           }
           const dragItem = getItemNameFromID(
-            event.operation.source.id as string, // will remove this cast later
+            event.operation.source.id as string,
           );
+          // disable drag if the item is already solved
+          if (isSolved(itemPositions[dragItem])) {
+            event.preventDefault();
+          }
+        }}
+        onDragMove={({ operation }) => {
+          const { source, position } = operation;
+          if (!source || !position || !operation) {
+            return;
+          }
+          const dragEl = document.getElementById(source.id as string);
+          if (!dragEl) {
+            return;
+          }
+          const dragItem = getItemNameFromID(source.id as string);
+
+          for (const item in itemPositions) {
+            // skip solved items
+            if (itemPositions[item].x === 0 && itemPositions[item].y === 0) {
+              continue;
+            }
+            if (item === dragItem) {
+              continue;
+            } // don't repel held object
+            const itemEl = document.getElementById(`day1-${item}`);
+            if (!itemEl) {
+              continue;
+            }
+
+            const dist = distBetweenElements(dragEl, itemEl);
+            const itemCenter = centerOfElement(itemEl);
+
+            // distance from center of item to pointer
+            // position.current is position of pointer
+            const dx = itemCenter.x - position.current.x;
+            const dy = itemCenter.y - position.current.y;
+            if (dist > 0.001 && dist < REPEL_RADIUS) {
+              // got this formula from claude
+              const push = (1 - dist / REPEL_RADIUS) * REPEL_STRENGTH;
+              translateItem(item, {
+                x: (dx / dist) * push,
+                y: (dy / dist) * push,
+                z: 0,
+              });
+            }
+          }
+        }}
+        onDragEnd={({ operation }) => {
+          /* Prevents items snapping back to their old position after drag */
+          if (!operation.source) {
+            return;
+          }
+          // Name of item being dragged
+          const dragItem = getItemNameFromID(operation.source.id as string);
           const newPosition: Pos = {
-            x: itemPositions[dragItem].x + event.operation.transform.x,
-            y: itemPositions[dragItem].y + event.operation.transform.y,
+            x: itemPositions[dragItem].x + operation.transform.x,
+            y: itemPositions[dragItem].y + operation.transform.y,
             z: 50,
           };
-          setItemPosition(dragItem, newPosition);
+
+          const dragEl = document.getElementById(operation.source.id as string);
+
+          if (isItemInWinnableState(itemPositions[dragItem], dragEl)) {
+            solveItem(dragItem);
+          } else {
+            setItemPosition(dragItem, newPosition); // update current position
+          }
         }}
         plugins={(defaults) => [
           ...defaults,
@@ -163,6 +276,16 @@ export default function Level1() {
               key={item.name}
               itemData={item}
               itemPos={itemPositions[item.name]}
+              withinSnappingPosition={() => {
+                const el = document.getElementById(`day1-${item.name}`);
+                const width = el?.offsetWidth || 0;
+                const height = el?.offsetHeight || 0;
+                return withinSnappingPosition(
+                  width,
+                  height,
+                  itemPositions[item.name],
+                );
+              }}
             />
           );
         })}
