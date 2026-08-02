@@ -1,11 +1,12 @@
 "use client";
 import { Feedback } from "@dnd-kit/dom";
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
-import { useState } from "react";
-import { allPass, mapValues, set, values } from "remeda";
+import { type Ref, useRef, useState } from "react";
+import { useStopwatch } from "react-timer-hook";
+import { clamp, set, values } from "remeda";
 import type { ItemData, ItemState, Pos } from "../components/day1_types";
 
-const REPEL_RADIUS = 300; // % gap under which a nearby idle item gets nudged
+const REPEL_RADIUS = 100; // % gap under which a nearby idle item gets nudged
 const REPEL_STRENGTH = 10; // nudge magnitude per % of overlap
 
 function vhToPx(vh: string) {
@@ -16,6 +17,25 @@ function vhToPx(vh: string) {
 function vwToPx(vw: string) {
   const percent = parseInt(vw.split("vh")[0]) * 0.01;
   return Math.ceil(percent * window.innerWidth);
+}
+
+function clampToScreenPos(el: HTMLElement | null, pos: Pos) {
+  if (!el) {
+    return pos;
+  }
+  // get global coordinates of element
+  const rect = el.getBoundingClientRect();
+  // only 50% of height/width should be out of screen;
+  const maxX = window.innerWidth - rect.width / 2;
+  const minX = -(rect.width / 2);
+  const maxY = window.innerHeight - rect.height / 2;
+  const minY = -(rect.height / 2);
+
+  return {
+    x: clamp(pos.x, { min: minX, max: maxX }),
+    y: clamp(pos.y, { min: minY, max: maxY }),
+    z: pos.z,
+  };
 }
 
 const ITEMS: ItemData[] = [
@@ -100,9 +120,13 @@ function DraggableItem({
 }) {
   const { ref: dragRef } = useDraggable({ id: `day1-${itemData.name}` });
   const { ref: dropRef } = useDroppable({ id: `day1-${itemData.name}` });
+  const elRef: Ref<HTMLElement | null> = useRef(null);
+  const clampedPosition =
+    elRef && elRef.current ? clampToScreenPos(elRef.current, itemPos) : itemPos;
   return (
     <div
       ref={(node) => {
+        elRef.current = node;
         dragRef(node);
         dropRef(node);
       }}
@@ -114,8 +138,8 @@ function DraggableItem({
         rotate: withinSnappingPosition() ? "0deg" : itemData.initialRotate,
         translate: withinSnappingPosition()
           ? "0px 0px"
-          : `${itemPos.x}px ${itemPos.y}px`,
-        zIndex: itemPos.z,
+          : `${clampedPosition.x}px ${clampedPosition.y}px`,
+        zIndex: clampedPosition.z,
       }}
     >
       <img alt={itemData.name} src={itemData.image} className="w-full" />
@@ -138,10 +162,18 @@ export default function Level1() {
   const [itemWinState, setItemWinState] = useState(
     Object.fromEntries(ITEMS.map(({ name }) => [name, false])),
   );
+  const { hours, minutes, seconds } = useStopwatch({ autoStart: true });
 
   function solveItem(item: string) {
     setItemPosition(item, { x: 0, y: 0, z: 0 });
     setItemWinState(set(itemWinState, item, true));
+  }
+
+  function printTimer() {
+    if (hours > 0) {
+      return `${hours}:${minutes}:${seconds}`;
+    }
+    return `${minutes}:${seconds}`;
   }
 
   function setItemPosition(itemName: string, itemPos: Pos) {
@@ -182,7 +214,7 @@ export default function Level1() {
   }
 
   function gameWon() {
-    return values(itemWinState).every((x) => x);
+    return values(itemWinState).every((x: boolean) => x);
   }
 
   return (
