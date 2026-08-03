@@ -1,14 +1,18 @@
+import { createTimeline } from "animejs";
 import dayjs from "dayjs";
+import { useEffect } from "react";
 import { Link } from "react-router";
 
 function LevelIcon({
   link,
+  id,
   icon,
   name,
   bgColor,
   isLocked,
 }: {
   link: string;
+  id: string;
   icon: string;
   name: string;
   bgColor: string;
@@ -17,7 +21,8 @@ function LevelIcon({
   return (
     <Link to={!isLocked ? link : ""}>
       <article
-        style={{ backgroundColor: bgColor }}
+        id={`levels-${id}-icon`}
+        style={{ backgroundColor: bgColor, zIndex: id === "day2" ? 50 : 0 }}
         className={`aspect-square grow border-10 border-rich-black flex items-center justify-center p-[15%] relative`}
       >
         <img
@@ -39,6 +44,7 @@ export default function LevelsScreen() {
   const levels = [
     {
       name: "Day 1",
+      id: "day1",
       icon: "/levels/day1.svg",
       link: "/level/day/1",
       bgColor: "var(--color-bright-yellow)",
@@ -46,6 +52,7 @@ export default function LevelsScreen() {
     },
     {
       name: "Day 2",
+      id: "day2",
       icon: "/levels/day2.svg",
       link: "/level/day/2",
       bgColor: "var(--color-pale-yellow)",
@@ -53,12 +60,52 @@ export default function LevelsScreen() {
     },
     {
       name: "Day 3",
+      id: "day3",
       icon: "/levels/day3.svg",
       link: "/level/day/3",
       bgColor: "var(--color-deep-blue)",
       unlockDate: dayjs("August 5, 2026"),
     },
   ];
+
+  useEffect(() => {
+    const tl = createTimeline();
+    tl.label("start");
+    tl.add("#levels-day2-icon", {
+      scale: [1.25, 1],
+      duration: 550,
+      ease: "inOutCirc",
+    })
+      .add(
+        "#levels-day1-icon",
+        {
+          translateX: ["20vw", 0],
+          duration: 550,
+          ease: "inOutCirc",
+        },
+        "start",
+      )
+      .add(
+        "#levels-day3-icon",
+        {
+          translateX: ["-20vw", 0],
+          duration: 550,
+          ease: "inOutCirc",
+        },
+        "start",
+      )
+      .add(
+        ".levels-header",
+        {
+          translateY: [10, 0],
+          opacity: [0, 1],
+          duration: 550,
+          ease: "inOut",
+        },
+        "<-=200",
+      );
+    tl.init();
+  }, []);
 
   return (
     <main className="w-screen h-screen w-max-screen w-min-screen h-max-screen h-min-screen bg-linear-to-b from-[#a3c8c9] from-4% to-blue text-white pt-20 px-20">
@@ -68,7 +115,10 @@ export default function LevelsScreen() {
       <section className="flex w-full justify-between items-stretch gap-50">
         {levels.map((level) => (
           <article key={level.name} className="w-full max-h-full">
-            <p className="text-white text-6xl w-full text-center font-serif mb-10">
+            <p
+              id={`levels-${level.id}-header`}
+              className="levels-header text-white text-6xl w-full text-center font-serif mb-10"
+            >
               {level.name}
             </p>
             <LevelIcon
