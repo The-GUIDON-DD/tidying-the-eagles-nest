@@ -1,13 +1,19 @@
-import { createScope, createTimeline, type Scope, spring } from "animejs";
-import { useEffect, useRef } from "react";
+import {
+  animate,
+  createScope,
+  createTimeline,
+  type Scope,
+  spring,
+} from "animejs";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import styles from "./home.module.css";
 
 export default function Home() {
   const root = useRef(null);
   const scope = useRef<Scope | null>(null);
   const TEXT_CLASS =
     "col-start-2 text-white font-serif text-7xl text-right mb-10";
+  const [isWingFlying, setIsWingFlying] = useState(false);
 
   useEffect(() => {
     scope.current = createScope({ root }).add(() => {
@@ -41,6 +47,18 @@ export default function Home() {
       tl.init();
     });
   }, []);
+
+  function wingFly() {
+    if (!isWingFlying) {
+      setIsWingFlying(true);
+      animate("#menu-wing", {
+        translateY: ["150vh", "-200vh"],
+        translateX: ["150vw", "-150vh"],
+        duration: 3000,
+        ease: "linear",
+      }).then(() => setIsWingFlying(false));
+    }
+  }
 
   return (
     <main
@@ -78,16 +96,16 @@ export default function Home() {
           />
         </section>
         <section className="pt-[10%] pr-[5%]">
-          <p id="menu-play" className={`${TEXT_CLASS} ${styles.play}`}>
+          <p id="menu-play" className={`${TEXT_CLASS}`}>
             Play
           </p>
           <img
             id="menu-wing"
             alt="Wing"
             src={"/menu/Wing.svg"}
-            className={`${styles.wing} w-[170vw] max-w-none fixed bottom-[-20vh] left-[-80vw] opacity-50 mix-blend-color-burn`}
+            className={`w-[170vw] max-w-none fixed bottom-[-20vh] left-[-80vw] opacity-50 mix-blend-color-burn`}
           />
-          <Link to="/levels">
+          <Link to="/levels" onMouseEnter={wingFly}>
             <p className={TEXT_CLASS}>Levels</p>
           </Link>
           <p className={TEXT_CLASS}>How to Play</p>
