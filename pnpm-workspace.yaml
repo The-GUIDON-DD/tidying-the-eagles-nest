@@ -1,2 +1,4 @@
 allowBuilds:
+  esbuild: true
   lefthook: set this to true or false
+  workerd: true

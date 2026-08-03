@@ -6,7 +6,10 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "deploy": "pnpm run build && wrangler deploy",
+    "preview": "pnpm run build && wrangler dev",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
     "@dnd-kit/abstract": "^0.5.0",
@@ -16,7 +19,6 @@
     "@react-router/node": "8.0.0",
     "@react-router/serve": "8.0.0",
     "animejs": "^4.5.0",
-    "isbot": "^5.1.36",
     "modifiers": "link:@dnd-kit/abstract/modifiers",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -27,14 +29,17 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.4",
+    "@cloudflare/vite-plugin": "^1.50.0",
     "@react-router/dev": "8.0.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^22",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "isbot": "^5.2.1",
     "lefthook": "^2.1.10",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
-    "vite": "^8.0.3"
+    "vite": "^8.0.3",
+    "wrangler": "^4.118.0"
   }
 }
