@@ -52,7 +52,13 @@ function DraggableEnvelope({
   );
 }
 
-export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
+export default function IntroScreen({
+  bg = "#bd5d44",
+  onStart,
+}: {
+  bg: string;
+  onStart: () => void;
+}) {
   const [envelopePos, setPosition] = useState({ x: 0, y: 0 });
   const [isOverSnapArea, setIsOverSnapArea] = useState(false);
   const [showLetter, setShowLetter] = useState(false);
@@ -130,9 +136,10 @@ export default function IntroScreen({ bg = "#bd5d44" }: { bg: string }) {
         </p>
         <button
           type="button"
+          onClick={onStart}
           className="flex items-center justify-center bg-purple px-10 py-2 rounded-4xl gap-2"
         >
-          <p className="font-display font-bold text-white text-2xl uppercase">
+          <p className="font-display font-bold tinupdate ko yung ruleext-white text-2xl uppercase">
             Start
           </p>
           <img src="/start_arrow.svg" alt="Start Arrow" className="h-[60%]" />
