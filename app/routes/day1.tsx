@@ -1,6 +1,7 @@
 "use client";
 import { Feedback } from "@dnd-kit/dom";
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
+import { animate } from "animejs";
 import { type Ref, useRef, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import { set, values } from "remeda";
@@ -202,7 +203,12 @@ function DraggableItem({
         if (event.key === "Enter") enableFocus();
       }} // a11y compliance
     >
-      <img alt={itemData.name} src={itemData.image} className="w-full" />
+      <img
+        id={`day1-${itemData.name}-img`}
+        alt={itemData.name}
+        src={itemData.image}
+        className="w-full"
+      />
     </button>
   );
 }
@@ -324,6 +330,21 @@ export default function Level1() {
     return values(itemWinState).every((x: boolean) => x);
   }
 
+  function fixScale(el: HTMLElement | null) {
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      el.style.width = `${rect.width}px`;
+      el.style.height = `${rect.height}px`;
+    }
+  }
+
+  function resetScale(el: HTMLElement | null) {
+    if (el) {
+      el.style.width = "";
+      el.style.height = "";
+    }
+  }
+
   return (
     <>
       <main
@@ -347,8 +368,26 @@ export default function Level1() {
             );
             // disable drag if the item is already solved
             if (itemWinState[dragItem]) {
-              console.log("Drag Prevented:", dragItem);
               event.preventDefault();
+            }
+          }}
+          onDragStart={(event) => {
+            if (!event.operation.source) {
+              return;
+            }
+
+            const dragId = event.operation.source.id;
+            if (dragId) {
+              animate(`#${dragId as string}-img`, {
+                rotate: [1, 1.1, 1],
+                duration: 400,
+                ease: "inOutExpo",
+              });
+              animate(`#${dragId as string}-img`, {
+                rotate: [-2, 2, -1.5, 0],
+                duration: 400,
+                ease: "inOutSine",
+              });
             }
           }}
           onDragMove={({ operation }) => {
@@ -360,7 +399,6 @@ export default function Level1() {
             if (!dragEl) {
               return;
             }
-            const dragItem = getItemNameFromID(source.id as string);
 
             for (const item in itemPositions) {
               const snapPos = getSnapPosition(item);

@@ -247,3 +247,7 @@ body {
   font-style: normal;
   font-display: swap;
 }
+
+#day1-laptop:popover-open {
+  width: 100%;
+}
