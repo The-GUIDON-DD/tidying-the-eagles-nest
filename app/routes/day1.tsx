@@ -169,9 +169,10 @@ function DraggableItem({
   const { ref: dragRef } = useDraggable({ id: `day1-${itemData.name}` });
   const { ref: dropRef } = useDroppable({ id: `day1-${itemData.name}` });
   const elRef: Ref<HTMLElement | null> = useRef(null);
-  const clampedPosition = elRef?.current
-    ? clampToScreenPos(elRef.current, itemPos)
-    : itemPos;
+
+  const correctPos = CORRECT_POSITION[
+    itemData.name as keyof typeof CORRECT_POSITION
+  ] || { x: 0, y: 0, z: 0 };
 
   return (
     <button
@@ -186,10 +187,13 @@ function DraggableItem({
       style={{
         width: itemData.width,
         transformStyle: "preserve-3d",
-        rotate: withinSnappingPosition() ? "0deg" : itemData.initialRotate,
-        translate: `${clampedPosition.x}px ${clampedPosition.y}px`,
+        rotate:
+          correctPos.x === itemPos.x && correctPos.y === itemPos.y
+            ? "0deg"
+            : itemData.initialRotate,
+        translate: `${itemPos.x}px ${itemPos.y}px`,
         filter: `${isFocusedItem ? "drop-shadow(0 0 16px #00bfff)" : ""}`,
-        zIndex: clampedPosition.z,
+        zIndex: itemPos.z,
       }}
       onClick={() => {
         if (withinSnappingPosition()) enableFocus();
@@ -260,11 +264,16 @@ export default function Level1() {
     );
   }
 
-  function isItemInWinnableState(itemPos: Pos, itemEl: HTMLElement | null) {
+  function isItemInWinnableState(
+    item: string,
+    itemPos: Pos,
+    itemEl: HTMLElement | null,
+  ) {
     return withinSnappingPosition(
       itemEl?.offsetWidth || 0,
       itemEl?.offsetHeight || 0,
       itemPos,
+      getSnapPosition(item),
     );
   }
 
@@ -338,6 +347,7 @@ export default function Level1() {
             );
             // disable drag if the item is already solved
             if (itemWinState[dragItem]) {
+              console.log("Drag Prevented:", dragItem);
               event.preventDefault();
             }
           }}
@@ -402,10 +412,10 @@ export default function Level1() {
               operation.source.id as string,
             );
 
-            if (isItemInWinnableState(newPosition, dragEl)) {
+            if (isItemInWinnableState(dragItem, newPosition, dragEl)) {
               snapItem(dragItem);
             } else {
-              setItemPosition(dragItem, newPosition); // update current position
+              setItemPosition(dragItem, clampToScreenPos(newPosition)); // update current position
             }
           }}
           plugins={(defaults) => [
