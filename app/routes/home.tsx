@@ -1,5 +1,6 @@
 import { createScope, createTimeline, type Scope, spring } from "animejs";
 import { useEffect, useRef } from "react";
+import { Link } from "react-router";
 import styles from "./home.module.css";
 
 export default function Home() {
@@ -86,7 +87,9 @@ export default function Home() {
             src={"/menu/Wing.svg"}
             className={`${styles.wing} w-[170vw] max-w-none fixed bottom-[-20vh] left-[-80vw] opacity-50 mix-blend-color-burn`}
           />
-          <p className={TEXT_CLASS}>Levels</p>
+          <Link to="/levels">
+            <p className={TEXT_CLASS}>Levels</p>
+          </Link>
           <p className={TEXT_CLASS}>How to Play</p>
           <p className={TEXT_CLASS}>Credits</p>
         </section>
