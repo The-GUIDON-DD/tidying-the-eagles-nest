@@ -96,9 +96,11 @@ export default function Home() {
           />
         </section>
         <section className="pt-[10%] pr-[5%]">
-          <p id="menu-play" className={`${TEXT_CLASS}`}>
-            Play
-          </p>
+          <Link onMouseEnter={wingFly} to="/day/1">
+            <p id="menu-play" className={`${TEXT_CLASS}`}>
+              Play
+            </p>
+          </Link>
           <img
             id="menu-wing"
             alt="Wing"
