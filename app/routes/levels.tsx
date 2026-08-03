@@ -1,7 +1,8 @@
-import { createTimeline } from "animejs";
+import { animate, createTimeline } from "animejs";
 import dayjs from "dayjs";
 import { useEffect } from "react";
 import { Link } from "react-router";
+import styles from "../styles/levels.module.css";
 
 function LevelIcon({
   link,
@@ -18,6 +19,13 @@ function LevelIcon({
   bgColor: string;
   isLocked: boolean;
 }) {
+  function shake() {
+    animate(`#levels-${id}-lock-img`, {
+      rotate: [-8, 8, -6.5, 6.5, -4.5, 0],
+      duration: 360,
+      ease: "inOutSine",
+    });
+  }
   return (
     <Link to={!isLocked ? link : ""}>
       <article
@@ -32,8 +40,22 @@ function LevelIcon({
         />
         {/* locked layer */}
         {isLocked && (
-          <div className="size-full absolute inset-0 bg-[rgba(0,0,0,0.3)] flex items-center justify-center">
-            <img src="/levels/lock.svg" alt="Locked" className="w-[20%]" />
+          <div
+            role="none"
+            onMouseEnter={shake} // biome-ignore lint: for presentation purposes only
+            className={`${styles.levelsLock} size-full absolute inset-0 bg-[rgba(0,0,0,0.3)] flex items-center justify-center`}
+          >
+            <div
+              id={`levels-${id}-lock-img-cont`}
+              className={`${styles.levelsLockHover} w-[20%]`}
+            >
+              <img
+                id={`levels-${id}-lock-img`}
+                src="/levels/lock.svg"
+                alt="Locked"
+                className="w-full"
+              />
+            </div>
           </div>
         )}
       </article>
