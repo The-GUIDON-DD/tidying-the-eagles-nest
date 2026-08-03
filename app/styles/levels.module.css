@@ -1,0 +1,8 @@
+.levelsLock .levelsLockHover {
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(1);
+}
+
+.levelsLock:hover .levelsLockHover {
+  transform: scale(1.2);
+}
