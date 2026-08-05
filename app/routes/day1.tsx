@@ -152,7 +152,16 @@ export default function Level1() {
   const { hours, minutes, seconds } = useStopwatch({ autoStart: true });
 
   function setItemPosition(itemName: string, itemPos: Pos) {
-    setItemPositions((prev) => ({ ...prev, [itemName]: itemPos }));
+    const itemEl = document.getElementById(`day1-${itemName}`);
+    if (!itemEl) return;
+    setItemPositions((prev) => ({
+      ...prev,
+      [itemName]: clampToScreenPos(
+        itemEl.offsetWidth,
+        itemEl.offsetHeight,
+        itemPos,
+      ),
+    }));
     setItemWinState((prev) => ({
       ...prev,
       [itemName]: isWinnablePosition(itemName, itemPos),
@@ -307,7 +316,7 @@ export default function Level1() {
     }
   }
 
-  function isItemInWinnableState(
+  function isItemInSnappableState(
     item: string,
     itemPos: Pos,
     itemEl: HTMLElement | null,
@@ -343,24 +352,11 @@ export default function Level1() {
   }
 
   function switchLayers(dir: LayerDirection) {
-    console.log(
-      "Layers below ",
-      focusedItem,
-      ": ",
-      getOverlappingItemsAboveOrBelow(focusedItem, CheckLayers.BELOW),
-    );
-    console.log(
-      "Layers above",
-      focusedItem,
-      ": ",
-      getOverlappingItemsAboveOrBelow(focusedItem, CheckLayers.ABOVE),
-    );
     const swappableLayer =
       dir === LayerDirection.DOWN
         ? getNearestObjectAboveOrBelow(focusedItem, CheckLayers.BELOW)
         : getNearestObjectAboveOrBelow(focusedItem, CheckLayers.ABOVE);
 
-    console.log("Swappable Layers for ", focusedItem, ": ", swappableLayer);
     if (swappableLayer) {
       switchItemLayers(focusedItem, swappableLayer);
     }
@@ -429,11 +425,12 @@ export default function Level1() {
                   operation.source.id as string,
                 );
 
-                if (isItemInWinnableState(dragItem, newPosition, dragEl)) {
+                if (isItemInSnappableState(dragItem, newPosition, dragEl)) {
                   snapItem(dragItem);
                 } else {
-                  setItemPosition(dragItem, clampToScreenPos(newPosition)); // update current position
+                  setItemPosition(dragItem, newPosition); // update current position
                 }
+                setFocusedItem(dragItem);
               }}
               plugins={(defaults) => [
                 ...defaults,

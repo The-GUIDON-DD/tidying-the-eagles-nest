@@ -26,16 +26,16 @@ export function vwToPx(vw: string) {
   return Math.ceil(percent * window.innerWidth);
 }
 
-export function clampToScreenPos(pos: Pos) {
+export function clampToScreenPos(width, height, pos: Pos) {
   // only 25% of height/width should be out of screen;
   return {
     x: clamp(pos.x, {
-      min: -window.innerWidth / 4,
-      max: window.innerWidth / 4,
+      min: -window.innerWidth - width / 4,
+      max: window.innerWidth - width * 0.75,
     }),
     y: clamp(pos.y, {
-      min: -window.innerHeight / 4,
-      max: window.innerHeight / 4,
+      min: -window.innerHeight - height / 4,
+      max: window.innerHeight - height * 0.75,
     }),
     z: pos.z,
   };
