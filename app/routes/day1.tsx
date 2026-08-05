@@ -462,7 +462,7 @@ export default function Level1() {
               })}
             </DragDropProvider>
           </main>
-          {(true || gameWon()) && <WinScreen time={printTimer()} />}
+          {gameWon() && <WinScreen time={printTimer()} />}
         </>
       )}
     </>
