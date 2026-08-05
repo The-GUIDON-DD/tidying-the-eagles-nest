@@ -1,0 +1,8 @@
+.menuItem {
+  opacity: 1;
+  transition: opacity 350ms ease-in-out;
+}
+
+.menuItem:hover ~ .menuItem {
+  opacity: 0.5;
+}
