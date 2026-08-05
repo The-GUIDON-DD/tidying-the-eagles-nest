@@ -7,6 +7,7 @@
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-display: "Novel Display XCnd";
   --font-serif: "Skolar PE VF Italics";
+  --font-serif-upright: "Skolar PE TRIAL";
   --color-purple: #5d3e9e;
   --color-pale-yellow: #fffbe6;
   --color-deep-blue: #1c2a5e;
@@ -245,6 +246,106 @@ body {
     url("/fonts/SkolarPEVF/SkolarPEVF-Ups.woff") format("woff");
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Bd.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Bd.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-BdIt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-BdIt.woff") format("woff");
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-It.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-It.woff") format("woff");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Lt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Lt.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-LtIt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-LtIt.woff") format("woff");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Me.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Me.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-MeIt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-MeIt.woff") format("woff");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Rg.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Rg.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Sb.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Sb.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-SbIt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-SbIt.woff") format("woff");
+  font-weight: 600;
+  font-style: italic;
   font-display: swap;
 }
 
