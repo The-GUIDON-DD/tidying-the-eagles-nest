@@ -20,6 +20,7 @@
     "@react-router/serve": "8.0.0",
     "animejs": "^4.5.0",
     "dayjs": "^1.11.21",
+    "html2canvas": "^1.4.1",
     "modifiers": "link:@dnd-kit/abstract/modifiers",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

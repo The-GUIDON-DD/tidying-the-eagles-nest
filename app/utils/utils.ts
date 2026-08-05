@@ -26,17 +26,30 @@ export function vwToPx(vw: string) {
   return Math.ceil(percent * window.innerWidth);
 }
 
-export function clampToScreenPos(pos: Pos) {
+export function clampToScreenPos(width, height, pos: Pos) {
   // only 25% of height/width should be out of screen;
   return {
     x: clamp(pos.x, {
-      min: -window.innerWidth / 4,
-      max: window.innerWidth / 4,
+      min: -window.innerWidth - width / 4,
+      max: window.innerWidth - width * 0.75,
     }),
     y: clamp(pos.y, {
-      min: -window.innerHeight / 4,
-      max: window.innerHeight / 4,
+      min: -window.innerHeight - height / 4,
+      max: window.innerHeight - height * 0.75,
     }),
     z: pos.z,
   };
+}
+
+export function isOverlapping(el1: HTMLElement, el2: HTMLElement) {
+  const rect1 = el1.getBoundingClientRect();
+  const rect2 = el2.getBoundingClientRect();
+
+  // AABB Collision Check
+  return !(
+    rect1.right < rect2.left ||
+    rect1.left > rect2.right ||
+    rect1.bottom < rect2.top ||
+    rect1.top > rect2.bottom
+  );
 }

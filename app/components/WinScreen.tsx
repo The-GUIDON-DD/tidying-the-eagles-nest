@@ -1,13 +1,15 @@
-import {
-  animate,
-  type createLayout,
-  createTimeline,
-  cubicBezier,
-  type Scope,
-  spring,
-} from "animejs";
+import { animate, createTimeline, cubicBezier, spring } from "animejs";
+import html2canvas from "html2canvas";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import ShareImage from "./ShareImage";
+
+interface BGIndex {
+  [key: number]: string;
+}
+const BGs: BGIndex = {
+  1: "/day1/sharebg.png",
+};
 
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
@@ -178,7 +180,57 @@ function WinPage1({ nextPage }: { nextPage: () => void }) {
   );
 }
 
-function WinPage2({ prevPage }: { prevPage: () => void }) {
+function downloadImage() {
+  const resultsDiv = document.getElementById("resultsScreenshot");
+  if (!resultsDiv) return;
+  html2canvas(resultsDiv).then((canvas) => {
+    const resultsLink = document.createElement("a");
+    resultsLink.download = "TidyingTheEaglesNest-Day1.png";
+    resultsLink.href = canvas.toDataURL("image/png", 1);
+    resultsLink.click();
+  });
+}
+
+function shareResult() {
+  if (navigator.share && navigator.canShare) {
+    const resultsDiv = document.getElementById("resultsScreenshot");
+    if (!resultsDiv) return;
+    html2canvas(resultsDiv).then((canvas) => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return;
+          const shareData = {
+            title: "TidyingTheEaglesNest-Day1",
+            files: [
+              new File([blob], "TidyingTheEaglesNest-Day1.png", {
+                type: blob.type,
+              }),
+            ],
+          };
+
+          if (navigator.canShare(shareData)) {
+            navigator.share(shareData).catch(() => downloadImage());
+          } else {
+            downloadImage();
+          }
+        },
+        "image/png",
+        1,
+      );
+    });
+  } else {
+    downloadImage();
+  }
+}
+function WinPage2({
+  prevPage,
+  day = 1,
+  time,
+}: {
+  prevPage: () => void;
+  day?: number;
+  time: string;
+}) {
   useEffect(() => {
     animate("#win-content-2", {
       scale: [0, 1],
@@ -195,53 +247,68 @@ function WinPage2({ prevPage }: { prevPage: () => void }) {
     }).then(prevPage);
   }
   return (
-    <div
-      id="win-content-2"
-      className={`fixed inset-0 ${MAX_SCREEN_SIZE} flex items-center justify-evenly z-50`}
-    >
-      <button
-        type="button"
-        onClick={onBackButton}
-        className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase"
-      >
-        <img alt="Continue" src="/levels/back.svg" className="h-[2.5rem]" />
-        <p>Back</p>
-      </button>
-      <div className="flex flex-col items-center">
-        <img
-          src="/level_win/share-your-results.svg"
-          alt="Share your results!"
-          className="w-[50vw] mb-[-6vh] z-51"
-        />
-        <div className="h-[70vh] w-[30vw] border-14 border-[#361876] bg-[#363636] drop-shadow-[0_15px_34px_rgba(0,0,0,0.25)]" />
-        <button type="button">
-          <img
-            src={"/level_win/download.svg"}
-            alt="Download"
-            className="h-[5vh] mt-10"
-          />
-        </button>
+    <>
+      {/* hidden share image to export to png */}
+      <div className="z-0 w-[439px]" id="resultsScreenshot">
+        {/* set to 30vw since I won't check font size... it's a bit lazy tbh */}
+        <ShareImage bg={BGs[day]} width="105%" time={time} />
       </div>
-      <Link
-        to="/"
-        className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase"
+      <div
+        id="win-content-2"
+        className={`fixed inset-0 ${MAX_SCREEN_SIZE} flex items-center justify-evenly z-50`}
       >
-        <p>Home</p>
-        <img
-          alt="Continue"
-          src="/levels/back.svg"
-          className="h-[2.5rem] -scale-x-100"
-        />
-      </Link>
-    </div>
+        <button
+          type="button"
+          onClick={onBackButton}
+          className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase"
+        >
+          <img alt="Continue" src="/levels/back.svg" className="h-[2.5rem]" />
+          <p>Back</p>
+        </button>
+        <div className="flex flex-col items-center">
+          <img
+            src="/level_win/share-your-results.svg"
+            alt="Share your results!"
+            className="w-[50vw] mb-[-6vh] z-51"
+          />
+          <div className="h-[75vh] w-[30vw] border-14 border-[#361876] bg-[#363636] drop-shadow-[0_15px_34px_rgba(0,0,0,0.25)] overflow-clip">
+            <ShareImage bg={BGs[day]} width="100%" time={time} />
+          </div>
+          <button type="button" onClick={shareResult}>
+            <img
+              src={"/level_win/download.svg"}
+              alt="Download"
+              className="h-[5vh] mt-10"
+            />
+          </button>
+        </div>
+        <Link
+          to="/"
+          className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase"
+        >
+          <p>Home</p>
+          <img
+            alt="Continue"
+            src="/levels/back.svg"
+            className="h-[2.5rem] -scale-x-100"
+          />
+        </Link>
+      </div>
+    </>
   );
 }
 
-export default function WinScreen() {
+export default function WinScreen({
+  day = 1,
+  time,
+}: {
+  day?: number;
+  time: string;
+}) {
   const root = useRef(null);
   const pages = [
     <WinPage1 key={0} nextPage={() => changePage(1)} />,
-    <WinPage2 key={1} prevPage={() => changePage(0)} />,
+    <WinPage2 key={1} day={day} prevPage={() => changePage(0)} time={time} />,
   ];
   const [curPage, setPage] = useState(0);
 
