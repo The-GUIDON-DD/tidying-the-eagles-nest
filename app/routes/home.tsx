@@ -6,7 +6,7 @@ import {
   spring,
 } from "animejs";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 export default function Home() {
   const root = useRef(null);
@@ -15,6 +15,7 @@ export default function Home() {
     "col-start-2 text-white font-serif text-7xl text-right mb-10";
   const [isWingFlying, setIsWingFlying] = useState(false);
   const [hoveredMenuItem, setHoverMenuItem] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     scope.current = createScope({ root }).add(() => {
@@ -48,6 +49,16 @@ export default function Home() {
       tl.init();
     });
   }, []);
+
+  function goToCredits() {
+    animate("#menu-content", {
+      translateY: "100vh",
+      duration: 2000,
+      ease: "outSine",
+    }).then(() => {
+      navigate("/credits");
+    });
+  }
 
   function wingFly() {
     if (!isWingFlying) {
@@ -136,10 +147,14 @@ export default function Home() {
           >
             <p className={TEXT_CLASS}>Levels</p>
           </Link>
-          <Link
-            to="/credits"
+          <button
+            type="button"
+            onClick={goToCredits}
             className="duration-500"
             onMouseOver={() => {
+              setHoverMenuItem("Credits");
+            }}
+            onFocus={() => {
               setHoverMenuItem("Credits");
             }}
             onMouseLeave={() => setHoverMenuItem("")}
@@ -151,7 +166,7 @@ export default function Home() {
             }}
           >
             <p className={TEXT_CLASS}>Credits</p>
-          </Link>
+          </button>
         </section>
       </section>
     </main>
