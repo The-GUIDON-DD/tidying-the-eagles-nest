@@ -56,7 +56,7 @@ export default function IntroScreen({
   bg = "#bd5d44",
   onStart,
 }: {
-  bg: string;
+  bg?: string;
   onStart: () => void;
 }) {
   const [envelopePos, setPosition] = useState({ x: 0, y: 0 });
@@ -120,7 +120,8 @@ export default function IntroScreen({
       <article
         className="absolute w-1/2 h-[70vh] left-1/4 duration-500 flex flex-col items-center py-15 px-25 gap-10"
         style={{
-          bottom: showLetter ? 0 : "-70vh",
+          bottom: 0,
+          transform: showLetter ? "translateY(0)" : "translateY(70vh)",
           backgroundBlendMode: "overlay, color-burn",
           background:
             "center / cover url('/letter/grain.svg'), linear-gradient(rgba(217,217,217,0), rgba(45,45,45,0.6)), #ffefe0",
@@ -139,7 +140,7 @@ export default function IntroScreen({
           onClick={onStart}
           className="flex items-center justify-center bg-purple px-10 py-2 rounded-4xl gap-2"
         >
-          <p className="font-display font-bold tinupdate ko yung ruleext-white text-2xl uppercase">
+          <p className="font-display font-bold text-white text-2xl uppercase">
             Start
           </p>
           <img src="/start_arrow.svg" alt="Start Arrow" className="h-[60%]" />

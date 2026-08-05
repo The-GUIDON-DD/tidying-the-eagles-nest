@@ -16,3 +16,14 @@ export interface ItemData {
 export interface ItemState {
   [itemName: string]: Pos;
 }
+
+export enum LayerDirection {
+  DOWN,
+  UP,
+}
+
+// I'll think of a better name eventually
+export enum CheckLayers {
+  BELOW,
+  ABOVE,
+}
