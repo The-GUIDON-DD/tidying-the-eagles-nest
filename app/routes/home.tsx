@@ -14,6 +14,7 @@ export default function Home() {
   const TEXT_CLASS =
     "col-start-2 text-white font-serif text-7xl text-right mb-10";
   const [isWingFlying, setIsWingFlying] = useState(false);
+  const [hoveredMenuItem, setHoverMenuItem] = useState("");
 
   useEffect(() => {
     scope.current = createScope({ root }).add(() => {
@@ -96,7 +97,19 @@ export default function Home() {
           />
         </section>
         <section className="pt-[10%] pr-[5%]">
-          <Link onMouseEnter={wingFly} to="/day/1">
+          <Link
+            onMouseOver={() => {
+              wingFly();
+              setHoverMenuItem("Play");
+            }}
+            onMouseLeave={() => setHoverMenuItem("")}
+            style={{
+              opacity:
+                hoveredMenuItem === "" || hoveredMenuItem === "Play" ? 1 : 0.5,
+            }}
+            className="duration-500"
+            to="/day/1"
+          >
             <p id="menu-play" className={`${TEXT_CLASS}`}>
               Play
             </p>
@@ -105,13 +118,40 @@ export default function Home() {
             id="menu-wing"
             alt="Wing"
             src={"/menu/Wing.svg"}
-            className={`w-[170vw] max-w-none fixed bottom-[-20vh] left-[-80vw] opacity-50 mix-blend-color-burn`}
+            className={`w-[170vw] max-w-none fixed bottom-[-20vh] left-[-80vw] opacity-50 mix-blend-color-burn pointer-events-none`}
           />
-          <Link to="/levels" onMouseEnter={wingFly}>
+          <Link
+            to="/levels"
+            className="duration-500"
+            onMouseOver={() => {
+              setHoverMenuItem("Levels");
+            }}
+            onMouseLeave={() => setHoverMenuItem("")}
+            style={{
+              opacity:
+                hoveredMenuItem === "" || hoveredMenuItem === "Levels"
+                  ? 1
+                  : 0.5,
+            }}
+          >
             <p className={TEXT_CLASS}>Levels</p>
           </Link>
-          <p className={TEXT_CLASS}>How to Play</p>
-          <p className={TEXT_CLASS}>Credits</p>
+          <Link
+            to="/credits"
+            className="duration-500"
+            onMouseOver={() => {
+              setHoverMenuItem("Credits");
+            }}
+            onMouseLeave={() => setHoverMenuItem("")}
+            style={{
+              opacity:
+                hoveredMenuItem === "" || hoveredMenuItem === "Credits"
+                  ? 1
+                  : 0.5,
+            }}
+          >
+            <p className={TEXT_CLASS}>Credits</p>
+          </Link>
         </section>
       </section>
     </main>
