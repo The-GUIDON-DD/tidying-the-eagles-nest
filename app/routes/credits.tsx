@@ -1,76 +1,83 @@
-import { createTimeline } from "animejs";
-import { useEffect } from "react";
+import { createScope, createTimeline, type Scope } from "animejs";
+import { useEffect, useRef } from "react";
 
 export default function Credits() {
-  useEffect(() => {
-    const tl = createTimeline();
-    tl.add("#credits-cont", {
-      translateY: ["100vh", 0],
-      duration: 2000,
-      ease: "outSine",
-    })
-      .label("start")
-      .add(
-        "#plume-blue",
-        {
-          y: [-30, -10],
-          rotate: ["-7deg", "5deg", 0],
-          duration: 2000,
-          ease: "inout",
-        },
-        "start-=1500",
-      )
-      .add(
-        "#plume-magenta",
-        {
-          y: [-30, -10],
-          rotate: ["-7deg", "5deg", 0],
-          duration: 2000,
-          ease: "inout",
-        },
-        "start-=1300",
-      )
-      .add(
-        "#envelope",
-        {
-          y: [-20, 0],
-          rotate: [-8, 0],
-          duration: 1500,
-          ease: "inout",
-        },
-        "start-=1300",
-      )
-      .add(
-        "#paper-front",
-        {
-          y: [-20, 0],
-          rotate: [-3, 0],
-          duration: "2000",
-          ease: "inout",
-        },
-        "start-=1300",
-      )
-      .add(
-        "#paper-back",
-        {
-          y: [-20, 0],
-          rotate: [2, 0],
-          duration: "2000",
-          ease: "inout",
-        },
-        "start-=1400",
-      )
-      .add(
-        "#stamp",
-        {
-          scale: [0, 1],
-          duration: 500,
-          ease: "outBounce",
-        },
-        "<",
-      );
+  const root = useRef(null);
+  const scope = useRef<Scope | null>(null);
 
-    tl.init();
+  useEffect(() => {
+    scope.current = createScope({ root }).add((_self) => {
+      const tl = createTimeline();
+      tl.add("#credits-cont", {
+        translateY: ["100vh", 0],
+        duration: 2000,
+        ease: "outSine",
+      })
+        .label("start")
+        .add(
+          "#plume-blue",
+          {
+            y: [-30, -10],
+            rotate: ["-7deg", "5deg", 0],
+            duration: 2000,
+            ease: "inout",
+          },
+          "start-=1500",
+        )
+        .add(
+          "#plume-magenta",
+          {
+            y: [-30, -10],
+            rotate: ["-7deg", "5deg", 0],
+            duration: 2000,
+            ease: "inout",
+          },
+          "start-=1300",
+        )
+        .add(
+          "#envelope",
+          {
+            y: [-20, 0],
+            rotate: [-8, 0],
+            duration: 1500,
+            ease: "inout",
+          },
+          "start-=1300",
+        )
+        .add(
+          "#paper-front",
+          {
+            y: [-20, 0],
+            rotate: [-3, 0],
+            duration: "2000",
+            ease: "inout",
+          },
+          "start-=1300",
+        )
+        .add(
+          "#paper-back",
+          {
+            y: [-20, 0],
+            rotate: [2, 0],
+            duration: "2000",
+            ease: "inout",
+          },
+          "start-=1400",
+        )
+        .add(
+          "#stamp",
+          {
+            scale: [0, 1],
+            duration: 500,
+            ease: "outBounce",
+          },
+          "<",
+        );
+
+      tl.init();
+    });
+
+    return () => scope.current?.revert();
   }, []);
 
   const PAPER_CLASS =
@@ -78,7 +85,10 @@ export default function Credits() {
   const TEXT_CLASS =
     "text-[#595959] text-3xl leading-[1.5em] font-serif-upright w-full text-center";
   return (
-    <main className="h-screen w-screen max-h-screen max-w-screen bg-radial from-purple from-25% to-deep-blue to-90% overflow-clip">
+    <main
+      ref={root}
+      className="h-screen w-screen max-h-screen max-w-screen bg-radial from-purple from-25% to-deep-blue to-90% overflow-clip"
+    >
       <div id="credits-cont" className="size-full fixed inset-0">
         <img
           alt="Envelope"
