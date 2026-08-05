@@ -9,7 +9,7 @@ import {
 import { animate } from "animejs";
 import { type Ref, useRef, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
-import { firstBy, set, values } from "remeda";
+import { firstBy, values } from "remeda";
 import IntroScreen from "~/components/IntroScreen";
 import WinScreen from "~/components/WinScreen";
 import {
@@ -149,7 +149,7 @@ export default function Level1() {
   );
   const [focusedItem, setFocusedItem] = useState("");
   const [isIntroStage, setIsIntroStage] = useState(true);
-  const { hours, minutes, seconds } = useStopwatch({ autoStart: true });
+  const { hours, minutes, seconds, pause } = useStopwatch({ autoStart: true });
 
   function setItemPosition(itemName: string, itemPos: Pos) {
     const itemEl = document.getElementById(`day1-${itemName}`);
@@ -294,6 +294,7 @@ export default function Level1() {
   }
 
   function printTimer() {
+    pause();
     if (hours > 0) {
       return `${hours}:${minutes}:${seconds}`;
     }
@@ -337,7 +338,7 @@ export default function Level1() {
     });
   }
 
-  function checkIfInSnapPosition(item: string) {
+  function _checkIfInSnapPosition(item: string) {
     const snapPos = getSnapPosition(item);
     if (
       !(item in itemPositions) ||
@@ -461,7 +462,7 @@ export default function Level1() {
               })}
             </DragDropProvider>
           </main>
-          {gameWon() && <WinScreen />}
+          {gameWon() && <WinScreen time={printTimer()} />}
         </>
       )}
     </>

@@ -1,13 +1,14 @@
-import {
-  animate,
-  type createLayout,
-  createTimeline,
-  cubicBezier,
-  type Scope,
-  spring,
-} from "animejs";
+import { animate, createTimeline, cubicBezier, spring } from "animejs";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import ShareImage from "./ShareImage";
+
+interface BGIndex {
+  [key: number]: string;
+}
+const BGs: BGIndex = {
+  1: "/day1/sharebg.png",
+};
 
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
@@ -178,7 +179,15 @@ function WinPage1({ nextPage }: { nextPage: () => void }) {
   );
 }
 
-function WinPage2({ prevPage }: { prevPage: () => void }) {
+function WinPage2({
+  prevPage,
+  day = 1,
+  time,
+}: {
+  prevPage: () => void;
+  day?: number;
+  time: string;
+}) {
   useEffect(() => {
     animate("#win-content-2", {
       scale: [0, 1],
@@ -213,7 +222,9 @@ function WinPage2({ prevPage }: { prevPage: () => void }) {
           alt="Share your results!"
           className="w-[50vw] mb-[-6vh] z-51"
         />
-        <div className="h-[70vh] w-[30vw] border-14 border-[#361876] bg-[#363636] drop-shadow-[0_15px_34px_rgba(0,0,0,0.25)]" />
+        <div className="h-[75vh] w-[30vw] border-14 border-[#361876] bg-[#363636] drop-shadow-[0_15px_34px_rgba(0,0,0,0.25)] overflow-clip">
+          <ShareImage bg={BGs[day]} width="100%" time={time} />
+        </div>
         <button type="button">
           <img
             src={"/level_win/download.svg"}
@@ -237,11 +248,17 @@ function WinPage2({ prevPage }: { prevPage: () => void }) {
   );
 }
 
-export default function WinScreen() {
+export default function WinScreen({
+  day = 1,
+  time,
+}: {
+  day?: number;
+  time: string;
+}) {
   const root = useRef(null);
   const pages = [
     <WinPage1 key={0} nextPage={() => changePage(1)} />,
-    <WinPage2 key={1} prevPage={() => changePage(0)} />,
+    <WinPage2 key={1} day={day} prevPage={() => changePage(0)} time={time} />,
   ];
   const [curPage, setPage] = useState(0);
 
