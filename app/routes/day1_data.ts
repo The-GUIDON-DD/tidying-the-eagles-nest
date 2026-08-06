@@ -17,7 +17,7 @@ export const CORRECT_ORDER = {
 };
 
 export const CORRECT_POSITION = {
-  twobytwo: { x: vwToPx("-8vw"), y: vhToPx("-7vh") },
+  twobytwo: { x: vwToPx("8vw"), y: vhToPx("-7vh") },
   umbrella: { x: 0, y: vwToPx("5vw") },
   waterbottle: { x: 0, y: vwToPx("-5vw") },
 };

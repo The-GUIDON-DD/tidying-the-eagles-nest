@@ -6,7 +6,7 @@ import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
 import { useEffect, useState } from "react";
 import useSound from "use-sound";
 import dingclick from "/sfx/dingclick.m4a?url";
-import dragSfx from "/sfx/paper_drag1.m4a?url";
+import dragSfx from "/sfx/paper_drag1_fast.m4a?url";
 import Envelope from "./Envelope";
 
 function DroppableSection() {
