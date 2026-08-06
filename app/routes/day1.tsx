@@ -9,7 +9,7 @@ import {
 import { animate } from "animejs";
 import { type Ref, useRef, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
-import { firstBy, sortBy, values } from "remeda";
+import { firstBy, values } from "remeda";
 import useSound from "use-sound";
 import IntroScreen from "~/components/IntroScreen";
 import WinScreen from "~/components/WinScreen";
@@ -19,9 +19,9 @@ import {
   distBetweenElements,
   isOverlapping,
 } from "~/utils/utils";
-import drag1 from "/sfx/paper_drag1_fast.m4a?url";
-import drag2 from "/sfx/paper_drag2_fast.m4a?url";
-import drag3 from "/sfx/paper_drag3_fast.m4a?url";
+import drop from "/sfx/drop.m4a?url";
+import grabSfx from "/sfx/grab.m4a?url";
+import repel1 from "/sfx/repel1.m4a?url";
 import {
   CheckLayers,
   type ItemData,
@@ -37,22 +37,9 @@ import {
 } from "./day1_data";
 
 const REPEL_RADIUS = 175; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 20; // nudge magnitude per % of overlap
+const REPEL_STRENGTH = 15; // nudge magnitude per % of overlap
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
-
-function DragSounds() {
-  const drag1Sfx = useSound(drag1);
-  const drag2Sfx = useSound(drag2);
-  const drag3Sfx = useSound(drag3);
-
-  return [drag1Sfx, drag2Sfx, drag3Sfx];
-}
-
-function randomDragSound() {
-  const dragSounds = DragSounds();
-  return dragSounds[Math.floor(Math.random() * dragSounds.length)];
-}
 
 function withinSnappingPosition(
   width: number,
@@ -126,21 +113,7 @@ function getItemNameFromID(itemName: string) {
   return itemName.substring("day1-".length);
 }
 
-function grabAnimation(dragId: string) {
-  animate(`#${dragId}-img`, {
-    rotate: [1, 1.1, 1],
-    duration: 400,
-    ease: "inOutExpo",
-  });
-  animate(`#${dragId}-img`, {
-    rotate: [-2, 2, -1.5, 0],
-    duration: 400,
-    ease: "inOutSine",
-  });
-}
-
 const ALL_ITEM_IDs = ITEMS.map((itemData) => `day1-${itemData.name}`);
-const ALL_ITEM_NAMES = ITEMS.map((item) => item.name);
 
 function getIntersectingItems(itemID: string) {
   const allItems = ALL_ITEM_IDs.filter((item) => item !== itemID);
@@ -168,6 +141,9 @@ export default function Level1() {
   const [focusedItem, setFocusedItem] = useState("");
   const [isIntroStage, setIsIntroStage] = useState(true);
   const { hours, minutes, seconds, pause } = useStopwatch({ autoStart: true });
+  const [playRepel, { stop: stopRepelSound }] = useSound(repel1);
+  const [grabSound] = useSound(grabSfx);
+  const [dropSound] = useSound(drop);
 
   function setItemPosition(itemName: string, itemPos: Pos) {
     const itemEl = document.getElementById(`day1-${itemName}`);
@@ -186,6 +162,19 @@ export default function Level1() {
     }));
   }
 
+  function grabAnimation(dragId: string) {
+    animate(`#${dragId}-img`, {
+      rotate: [1, 1.1, 1],
+      duration: 400,
+      ease: "inOutExpo",
+    });
+    animate(`#${dragId}-img`, {
+      rotate: [-2, 2, -1.5, 0],
+      duration: 400,
+      ease: "inOutSine",
+    });
+    grabSound();
+  }
   function getOverlappingItemsAboveOrBelow(
     itemName: string,
     checkLayers: CheckLayers,
@@ -238,9 +227,7 @@ export default function Level1() {
   }
 
   function snapItem(item: string) {
-    const topItemZ =
-      itemPositions[getTopLayer() as keyof typeof itemPositions].z;
-    setItemPosition(item, { ...getSnapPosition(item), z: topItemZ + 1 });
+    setItemPosition(item, getSnapPosition(item));
   }
 
   function repelObjectsWhileDragged(event: DragMoveEvent) {
@@ -303,6 +290,8 @@ export default function Level1() {
     };
     setItemPosition(item1, itemPos1);
     setItemPosition(item2, itemPos2);
+    stopRepelSound();
+    playRepel();
   }
 
   function getSnapPosition(item: string) {
@@ -360,32 +349,6 @@ export default function Level1() {
     });
   }
 
-  function checkIfInSnapPosition(item: string) {
-    const snapPos = getSnapPosition(item);
-    if (
-      !(item in itemPositions) ||
-      !(
-        itemPositions[item].x === snapPos.x &&
-        itemPositions[item].y === snapPos.y
-      )
-    ) {
-      return false;
-    }
-    return true;
-  }
-
-  function getAllSnappedItems(sorted: boolean = false) {
-    const layers = ALL_ITEM_NAMES.filter(checkIfInSnapPosition);
-    return sorted ? sortBy(layers, (item) => itemPositions[item].z) : layers;
-  }
-
-  function getTopLayer() {
-    return firstBy(getAllSnappedItems(), [
-      (item) => itemPositions[item].z,
-      "desc",
-    ]);
-  }
-
   function switchLayers(dir: LayerDirection) {
     const swappableLayer =
       dir === LayerDirection.DOWN
@@ -437,7 +400,6 @@ export default function Level1() {
 
                 const dragId = event.operation.source.id;
                 if (dragId) {
-                  randomDragSound();
                   grabAnimation(dragId as string);
                 }
               }}
@@ -466,7 +428,8 @@ export default function Level1() {
                 } else {
                   setItemPosition(dragItem, newPosition); // update current position
                 }
-                setFocusedItem(dragItem);
+                setFocusedItem((_prev) => dragItem);
+                dropSound();
               }}
               plugins={(defaults) => [
                 ...defaults,
