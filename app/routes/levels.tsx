@@ -2,6 +2,9 @@ import { animate, createTimeline } from "animejs";
 import dayjs from "dayjs";
 import { useEffect } from "react";
 import { Link } from "react-router";
+import useSound from "use-sound";
+import whoosh from "/sfx/levelswhoosh.m4a?url";
+import lockedSfx from "/sfx/lock.m4a?url";
 import styles from "../styles/levels.module.css";
 
 function LevelIcon({
@@ -19,7 +22,9 @@ function LevelIcon({
   bgColor: string;
   isLocked: boolean;
 }) {
+  const [lockSound] = useSound(lockedSfx);
   function shake() {
+    lockSound();
     animate(`#levels-${id}-lock-img`, {
       rotate: [-8, 8, -6.5, 6.5, -4.5, 0],
       duration: 360,
@@ -70,7 +75,7 @@ export default function LevelsScreen() {
       icon: "/levels/day1.svg",
       link: "/day/1",
       bgColor: "var(--color-bright-yellow)",
-      unlockDate: dayjs("August 3, 2026"),
+      unlockDate: dayjs("August 10, 2026"),
     },
     {
       name: "Day 2",
@@ -78,7 +83,7 @@ export default function LevelsScreen() {
       icon: "/levels/day2.svg",
       link: "/day/2",
       bgColor: "var(--color-pale-yellow)",
-      unlockDate: dayjs("August 4, 2026"),
+      unlockDate: dayjs("August 11, 2026"),
     },
     {
       name: "Day 3",
@@ -86,11 +91,14 @@ export default function LevelsScreen() {
       icon: "/levels/day3.svg",
       link: "/day/3",
       bgColor: "var(--color-deep-blue)",
-      unlockDate: dayjs("August 5, 2026"),
+      unlockDate: dayjs("August 12, 2026"),
     },
   ];
 
+  const [whooshSound] = useSound(whoosh);
+
   useEffect(() => {
+    whooshSound();
     const tl = createTimeline();
     tl.label("start");
     tl.add("#levels-day2-icon", {
@@ -127,7 +135,7 @@ export default function LevelsScreen() {
         "<-=200",
       );
     tl.init();
-  }, []);
+  }, [whooshSound]);
 
   return (
     <main className="w-screen h-screen w-max-screen w-min-screen h-max-screen h-min-screen bg-linear-to-b from-[#a3c8c9] from-4% to-blue text-white pt-20 px-20">
