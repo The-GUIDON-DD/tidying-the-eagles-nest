@@ -10,6 +10,7 @@ import { animate } from "animejs";
 import { type Ref, useRef, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import { firstBy, values } from "remeda";
+import useSound from "use-sound";
 import IntroScreen from "~/components/IntroScreen";
 import WinScreen from "~/components/WinScreen";
 import {
@@ -18,6 +19,9 @@ import {
   distBetweenElements,
   isOverlapping,
 } from "~/utils/utils";
+import drop from "/sfx/drop.m4a?url";
+import grabSfx from "/sfx/grab.m4a?url";
+import repel1 from "/sfx/repel1.m4a?url";
 import {
   CheckLayers,
   type ItemData,
@@ -33,7 +37,7 @@ import {
 } from "./day1_data";
 
 const REPEL_RADIUS = 175; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 7; // nudge magnitude per % of overlap
+const REPEL_STRENGTH = 10; // nudge magnitude per % of overlap
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
 
@@ -109,19 +113,6 @@ function getItemNameFromID(itemName: string) {
   return itemName.substring("day1-".length);
 }
 
-function grabAnimation(dragId: string) {
-  animate(`#${dragId}-img`, {
-    rotate: [1, 1.1, 1],
-    duration: 400,
-    ease: "inOutExpo",
-  });
-  animate(`#${dragId}-img`, {
-    rotate: [-2, 2, -1.5, 0],
-    duration: 400,
-    ease: "inOutSine",
-  });
-}
-
 const ALL_ITEM_IDs = ITEMS.map((itemData) => `day1-${itemData.name}`);
 
 function getIntersectingItems(itemID: string) {
@@ -150,6 +141,9 @@ export default function Level1() {
   const [focusedItem, setFocusedItem] = useState("");
   const [isIntroStage, setIsIntroStage] = useState(true);
   const { hours, minutes, seconds, pause } = useStopwatch({ autoStart: true });
+  const [playRepel, { stop: stopRepelSound }] = useSound(repel1);
+  const [grabSound] = useSound(grabSfx);
+  const [dropSound] = useSound(drop);
 
   function setItemPosition(itemName: string, itemPos: Pos) {
     const itemEl = document.getElementById(`day1-${itemName}`);
@@ -168,6 +162,19 @@ export default function Level1() {
     }));
   }
 
+  function grabAnimation(dragId: string) {
+    animate(`#${dragId}-img`, {
+      rotate: [1, 1.1, 1],
+      duration: 400,
+      ease: "inOutExpo",
+    });
+    animate(`#${dragId}-img`, {
+      rotate: [-2, 2, -1.5, 0],
+      duration: 400,
+      ease: "inOutSine",
+    });
+    grabSound();
+  }
   function getOverlappingItemsAboveOrBelow(
     itemName: string,
     checkLayers: CheckLayers,
@@ -259,7 +266,9 @@ export default function Level1() {
       const dy = itemCenter.y - position.current.y;
       if (dist > 0.001 && dist < REPEL_RADIUS) {
         // got this formula from claude
-        const push = (1 - dist / REPEL_RADIUS) * REPEL_STRENGTH;
+        const push =
+          (1 - dist / REPEL_RADIUS) *
+          (item === "twobytwo" ? 0.05 : REPEL_STRENGTH);
         translateItem(item, {
           x: (dx / dist) * push,
           y: (dy / dist) * push,
@@ -281,6 +290,8 @@ export default function Level1() {
     };
     setItemPosition(item1, itemPos1);
     setItemPosition(item2, itemPos2);
+    stopRepelSound();
+    playRepel();
   }
 
   function getSnapPosition(item: string) {
@@ -336,20 +347,6 @@ export default function Level1() {
       y: itemPositions[item].y + diff.y,
       z: itemPositions[item].z + diff.z,
     });
-  }
-
-  function _checkIfInSnapPosition(item: string) {
-    const snapPos = getSnapPosition(item);
-    if (
-      !(item in itemPositions) ||
-      !(
-        itemPositions[item].x === snapPos.x &&
-        itemPositions[item].y === snapPos.y
-      )
-    ) {
-      return false;
-    }
-    return true;
   }
 
   function switchLayers(dir: LayerDirection) {
@@ -431,7 +428,8 @@ export default function Level1() {
                 } else {
                   setItemPosition(dragItem, newPosition); // update current position
                 }
-                setFocusedItem(dragItem);
+                setFocusedItem((_prev) => dragItem);
+                dropSound();
               }}
               plugins={(defaults) => [
                 ...defaults,

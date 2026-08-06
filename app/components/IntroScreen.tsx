@@ -4,6 +4,9 @@ import { RestrictToHorizontalAxis } from "@dnd-kit/abstract/modifiers";
 import { Feedback } from "@dnd-kit/dom";
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
 import { useEffect, useState } from "react";
+import useSound from "use-sound";
+import dingclick from "/sfx/dingclick.m4a?url";
+import dragSfx from "/sfx/paper_drag1_fast.m4a?url";
 import Envelope from "./Envelope";
 
 function DroppableSection() {
@@ -63,6 +66,9 @@ export default function IntroScreen({
   const [isOverSnapArea, setIsOverSnapArea] = useState(false);
   const [showLetter, setShowLetter] = useState(false);
   const [centerPos, setCenterPos] = useState(585);
+  const [dingclickSound] = useSound(dingclick);
+  const [paperDrag] = useSound(dragSfx);
+
   useEffect(() => {
     setCenterPos(window.innerWidth * 0.45); // eyeballed value
     return () => {};
@@ -89,6 +95,7 @@ export default function IntroScreen({
               event.preventDefault();
             }
           }}
+          onDragStart={(_event) => paperDrag()}
           onDragEnd={(event) => {
             // This makes the envelope not snap back to its original position
             setPosition({
@@ -98,6 +105,7 @@ export default function IntroScreen({
             // Snap to center when over drop area
             if (event.operation.target) {
               setPosition({ x: -centerPos, y: 0 });
+              dingclickSound();
               setShowLetter(true);
             }
           }}
