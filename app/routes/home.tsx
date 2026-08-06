@@ -7,6 +7,8 @@ import {
 } from "animejs";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import useSound from "use-sound";
+import wingSound from "/sfx/wing.m4a?url";
 
 export default function Home() {
   const root = useRef(null);
@@ -16,6 +18,7 @@ export default function Home() {
   const [isWingFlying, setIsWingFlying] = useState(false);
   const [hoveredMenuItem, setHoverMenuItem] = useState("");
   const navigate = useNavigate();
+  const [eagleSound] = useSound(wingSound);
 
   useEffect(() => {
     scope.current = createScope({ root }).add(() => {
@@ -45,10 +48,11 @@ export default function Home() {
           translateX: ["150vw", "-200vw"],
           duration: 3000,
           ease: "linear",
+          onBegin: () => eagleSound(),
         });
       tl.init();
     });
-  }, []);
+  }, [eagleSound]);
 
   function goToCredits() {
     animate("#menu-content", {
@@ -63,6 +67,7 @@ export default function Home() {
   function wingFly() {
     if (!isWingFlying) {
       setIsWingFlying(true);
+      eagleSound();
       animate("#menu-wing", {
         translateY: ["150vh", "-200vh"],
         translateX: ["150vw", "-150vh"],
