@@ -9,7 +9,8 @@ import {
 import { animate } from "animejs";
 import { type Ref, useRef, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
-import { firstBy, values } from "remeda";
+import { firstBy, sortBy, values } from "remeda";
+import useSound from "use-sound";
 import IntroScreen from "~/components/IntroScreen";
 import WinScreen from "~/components/WinScreen";
 import {
@@ -18,6 +19,9 @@ import {
   distBetweenElements,
   isOverlapping,
 } from "~/utils/utils";
+import drag1 from "/sfx/paper_drag1_fast.m4a?url";
+import drag2 from "/sfx/paper_drag2_fast.m4a?url";
+import drag3 from "/sfx/paper_drag3_fast.m4a?url";
 import {
   CheckLayers,
   type ItemData,
@@ -33,9 +37,22 @@ import {
 } from "./day1_data";
 
 const REPEL_RADIUS = 175; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 7; // nudge magnitude per % of overlap
+const REPEL_STRENGTH = 20; // nudge magnitude per % of overlap
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
+
+function DragSounds() {
+  const drag1Sfx = useSound(drag1);
+  const drag2Sfx = useSound(drag2);
+  const drag3Sfx = useSound(drag3);
+
+  return [drag1Sfx, drag2Sfx, drag3Sfx];
+}
+
+function randomDragSound() {
+  const dragSounds = DragSounds();
+  return dragSounds[Math.floor(Math.random() * dragSounds.length)];
+}
 
 function withinSnappingPosition(
   width: number,
@@ -123,6 +140,7 @@ function grabAnimation(dragId: string) {
 }
 
 const ALL_ITEM_IDs = ITEMS.map((itemData) => `day1-${itemData.name}`);
+const ALL_ITEM_NAMES = ITEMS.map((item) => item.name);
 
 function getIntersectingItems(itemID: string) {
   const allItems = ALL_ITEM_IDs.filter((item) => item !== itemID);
@@ -220,7 +238,9 @@ export default function Level1() {
   }
 
   function snapItem(item: string) {
-    setItemPosition(item, getSnapPosition(item));
+    const topItemZ =
+      itemPositions[getTopLayer() as keyof typeof itemPositions].z;
+    setItemPosition(item, { ...getSnapPosition(item), z: topItemZ + 1 });
   }
 
   function repelObjectsWhileDragged(event: DragMoveEvent) {
@@ -259,7 +279,9 @@ export default function Level1() {
       const dy = itemCenter.y - position.current.y;
       if (dist > 0.001 && dist < REPEL_RADIUS) {
         // got this formula from claude
-        const push = (1 - dist / REPEL_RADIUS) * REPEL_STRENGTH;
+        const push =
+          (1 - dist / REPEL_RADIUS) *
+          (item === "twobytwo" ? 0.05 : REPEL_STRENGTH);
         translateItem(item, {
           x: (dx / dist) * push,
           y: (dy / dist) * push,
@@ -338,7 +360,7 @@ export default function Level1() {
     });
   }
 
-  function _checkIfInSnapPosition(item: string) {
+  function checkIfInSnapPosition(item: string) {
     const snapPos = getSnapPosition(item);
     if (
       !(item in itemPositions) ||
@@ -350,6 +372,18 @@ export default function Level1() {
       return false;
     }
     return true;
+  }
+
+  function getAllSnappedItems(sorted: boolean = false) {
+    const layers = ALL_ITEM_NAMES.filter(checkIfInSnapPosition);
+    return sorted ? sortBy(layers, (item) => itemPositions[item].z) : layers;
+  }
+
+  function getTopLayer() {
+    return firstBy(getAllSnappedItems(), [
+      (item) => itemPositions[item].z,
+      "desc",
+    ]);
   }
 
   function switchLayers(dir: LayerDirection) {
@@ -403,6 +437,7 @@ export default function Level1() {
 
                 const dragId = event.operation.source.id;
                 if (dragId) {
+                  randomDragSound();
                   grabAnimation(dragId as string);
                 }
               }}
