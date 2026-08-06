@@ -37,7 +37,7 @@ import {
 } from "./day1_data";
 
 const REPEL_RADIUS = 175; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 15; // nudge magnitude per % of overlap
+const REPEL_STRENGTH = 10; // nudge magnitude per % of overlap
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
 

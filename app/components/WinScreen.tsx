@@ -2,6 +2,10 @@ import { animate, createTimeline, cubicBezier, spring } from "animejs";
 import html2canvas from "html2canvas";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import useSound from "use-sound";
+import uiPop from "/sfx/pop.m4a?url";
+import winSound from "/sfx/win.m4a?url";
+import winMusic from "/sfx/winMusic.mp3?url";
 import ShareImage from "./ShareImage";
 
 interface BGIndex {
@@ -16,9 +20,11 @@ const MAX_SCREEN_SIZE =
 
 function BgBanner() {
   const GRID_OVERLAY_CHILD = "row-start-1 row-span-1 col-start-1 col-span-1";
+  const [playWinMusic] = useSound(winMusic);
 
   useEffect(() => {
     const BEZIER_OUT = cubicBezier(0.1, 0.7, 0.5, 1);
+    playWinMusic();
     const tl = createTimeline();
     tl.label("start")
       .add("#win-white-banner", {
@@ -70,7 +76,7 @@ function BgBanner() {
         "line-scroll",
       );
     tl.init();
-  }, []);
+  }, [playWinMusic]);
 
   return (
     <div
@@ -114,6 +120,8 @@ function BgBanner() {
 }
 
 function WinPage1({ nextPage }: { nextPage: () => void }) {
+  const [winJingle] = useSound(winSound);
+  const [popSfx] = useSound(uiPop);
   useEffect(() => {
     const tl = createTimeline();
     tl.add(
@@ -129,17 +137,19 @@ function WinPage1({ nextPage }: { nextPage: () => void }) {
         "#win-well-done",
         {
           scale: [0, 1],
+          onBegin: () => winJingle(),
           ease: spring({
             bounce: 0.65,
             duration: 350,
           }),
         },
-        "<-150",
+        "<+3500",
       )
       .init();
-  }, []);
+  }, [winJingle]);
 
   function onContinueButton() {
+    popSfx();
     animate("#win-content-1", {
       scale: [1, 0],
       duration: 250,
@@ -231,6 +241,7 @@ function WinPage2({
   day?: number;
   time: string;
 }) {
+  const [popSfx] = useSound(uiPop);
   useEffect(() => {
     animate("#win-content-2", {
       scale: [0, 1],
@@ -240,6 +251,7 @@ function WinPage2({
   }, []);
 
   function onBackButton() {
+    popSfx();
     animate("#win-content-2", {
       scale: [1, 0],
       duration: 250,
@@ -274,7 +286,13 @@ function WinPage2({
           <div className="h-[75vh] w-[30vw] border-14 border-[#361876] bg-[#363636] drop-shadow-[0_15px_34px_rgba(0,0,0,0.25)] overflow-clip">
             <ShareImage bg={BGs[day]} width="100%" time={time} />
           </div>
-          <button type="button" onClick={shareResult}>
+          <button
+            type="button"
+            onClick={() => {
+              popSfx();
+              shareResult();
+            }}
+          >
             <img
               src={"/level_win/download.svg"}
               alt="Download"
