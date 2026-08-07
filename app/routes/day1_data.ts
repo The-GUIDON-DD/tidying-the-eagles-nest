@@ -7,13 +7,13 @@ export const CORRECT_ORDER = {
   notebook: 2,
   bluebook: 3,
   map: 4,
-  pencilcase: 6,
-  wallet: 7,
-  fan: 8,
-  indexcard: 9,
-  twobytwo: 10,
+  pencilcase: 7,
+  wallet: 8,
+  fan: 9,
+  indexcard: 10,
+  twobytwo: 11,
   umbrella: 5,
-  waterbottle: 5,
+  waterbottle: 6,
 };
 
 export const CORRECT_POSITION = {
