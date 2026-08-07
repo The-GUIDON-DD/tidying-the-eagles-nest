@@ -318,13 +318,22 @@ export default function Level1() {
   function isWinnablePosition(itemName: string, itemPos: Pos) {
     if (!(itemName in CORRECT_ORDER)) return false;
     const correctOrder = CORRECT_ORDER[itemName as keyof typeof CORRECT_ORDER];
+    const correctObjectsBelow = Object.keys(CORRECT_ORDER).filter(
+      (other) =>
+        CORRECT_ORDER[other as keyof typeof CORRECT_ORDER] <
+        CORRECT_ORDER[itemName as keyof typeof CORRECT_ORDER],
+    );
+    const actualObjectsBelow = new Set(
+      getOverlappingItemsAboveOrBelow(itemName, CheckLayers.BELOW),
+    );
     if (itemName in CORRECT_POSITION) {
       const correctPos =
         CORRECT_POSITION[itemName as keyof typeof CORRECT_POSITION];
       return (
         correctPos.x === itemPos.x &&
         correctPos.y === itemPos.y &&
-        itemPos.z === correctOrder
+        correctObjectsBelow.length === actualObjectsBelow.size &&
+        correctObjectsBelow.every((other) => actualObjectsBelow.has(other))
       );
     } else {
       return itemPos.x === 0 && itemPos.y === 0 && itemPos.z === correctOrder;
