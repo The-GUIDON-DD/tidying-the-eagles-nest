@@ -280,13 +280,16 @@ export default function Level1() {
 
   function switchItemLayers(item1: string, item2: string) {
     const savedPositions = { ...itemPositions };
+    const canSameLayer =
+      (item1 === "waterbottle" || item1 === "umbrella") &&
+      (item2 === "waterbottle" || item2 === "umbrella");
     const itemPos1 = {
       ...savedPositions[item1],
       z: savedPositions[item2].z,
     };
     const itemPos2 = {
       ...savedPositions[item2],
-      z: savedPositions[item1].z,
+      z: canSameLayer ? savedPositions[item2].z : savedPositions[item1].z,
     };
     setItemPosition(item1, itemPos1);
     setItemPosition(item2, itemPos2);
