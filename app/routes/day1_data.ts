@@ -13,7 +13,7 @@ export const CORRECT_ORDER = {
   indexcard: 10,
   twobytwo: 11,
   umbrella: 5,
-  waterbottle: 6,
+  waterbottle: 5,
 };
 
 export const CORRECT_POSITION = {
