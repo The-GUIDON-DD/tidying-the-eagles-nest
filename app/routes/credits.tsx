@@ -1,11 +1,16 @@
 import { createScope, createTimeline, type Scope } from "animejs";
 import { useEffect, useRef } from "react";
+import useSound from "use-sound";
+import NavButton from "~/components/NavButton";
+import creditsSfx from "/sfx/credits.m4a?url";
 
 export default function Credits() {
   const root = useRef(null);
   const scope = useRef<Scope | null>(null);
+  const [creditsSound] = useSound(creditsSfx);
 
   useEffect(() => {
+    creditsSound();
     scope.current = createScope({ root }).add((_self) => {
       const tl = createTimeline();
       tl.add("#credits-cont", {
@@ -78,7 +83,7 @@ export default function Credits() {
     });
 
     return () => scope.current?.revert();
-  }, []);
+  }, [creditsSound]);
 
   const PAPER_CLASS =
     "aspect-3247/2794 w-[70vw] bg-linear-to-b from-[rgba(217,217,217,0.6)] to-[rgba(45,45,45,0.6)] bg-[#ffefe0] bg-blend-color-burn fixed pt-25 pb-15 px-10 min-w-[900px]";
@@ -145,6 +150,7 @@ export default function Credits() {
           className="fixed left-[3vw] bottom-[-1vh] w-[35vw]"
         />
       </div>
+      <NavButton link="/" text="Home" />
     </main>
   );
 }

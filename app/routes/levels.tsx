@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { useEffect } from "react";
 import { Link } from "react-router";
 import useSound from "use-sound";
+import NavButton from "~/components/NavButton";
 import whoosh from "/sfx/levelswhoosh.m4a?url";
 import lockedSfx from "/sfx/lock.m4a?url";
 import styles from "../styles/levels.module.css";
@@ -139,6 +140,8 @@ export default function LevelsScreen() {
 
   return (
     <main className="w-screen h-screen w-max-screen w-min-screen h-max-screen h-min-screen bg-linear-to-b from-[#a3c8c9] from-4% to-blue text-white pt-20 px-20">
+      <NavButton link="/" text="Home" />
+      <NavButton link="/credits" text="Credits" left={false} />
       <h1 className="w-full text-center capitalize font-bold font-display text-8xl mb-20">
         Levels
       </h1>
