@@ -1,9 +1,9 @@
 import { animate, createTimeline } from "animejs";
 import dayjs from "dayjs";
 import { useEffect } from "react";
+import { BiSolidHome } from "react-icons/bi";
 import { Link } from "react-router";
 import useSound from "use-sound";
-import NavButton from "~/components/NavButton";
 import whoosh from "/sfx/levelswhoosh.m4a?url";
 import lockedSfx from "/sfx/lock.m4a?url";
 import styles from "../styles/levels.module.css";
@@ -37,7 +37,7 @@ function LevelIcon({
       <article
         id={`levels-${id}-icon`}
         style={{ backgroundColor: bgColor, zIndex: id === "day2" ? 50 : 0 }}
-        className={`aspect-square grow border-10 border-rich-black flex items-center justify-center p-[15%] relative`}
+        className={`aspect-square grow border-10 border-purple-950 flex items-center justify-center p-[15%] relative`}
       >
         <img
           src={icon}
@@ -139,9 +139,10 @@ export default function LevelsScreen() {
   }, [whooshSound]);
 
   return (
-    <main className="w-screen h-screen w-max-screen w-min-screen h-max-screen h-min-screen bg-linear-to-b from-[#a3c8c9] from-4% to-blue text-white pt-20 px-20">
-      <NavButton link="/" text="Home" />
-      <NavButton link="/credits" text="Credits" left={false} />
+    <main className="w-screen h-screen w-max-screen w-min-screen h-max-screen h-min-screen bg-radial from-purple from-25% to-deep-blue to-90% text-white pt-20 px-20">
+      <Link to="/" className="text-white text-5xl fixed top-5 left-5">
+        <BiSolidHome />
+      </Link>
       <h1 className="w-full text-center capitalize font-bold font-display text-8xl mb-20">
         Levels
       </h1>

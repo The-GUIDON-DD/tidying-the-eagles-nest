@@ -1,7 +1,8 @@
 import { createScope, createTimeline, type Scope } from "animejs";
 import { useEffect, useRef } from "react";
+import { BiSolidHome } from "react-icons/bi";
+import { Link } from "react-router";
 import useSound from "use-sound";
-import NavButton from "~/components/NavButton";
 import creditsSfx from "/sfx/credits.m4a?url";
 
 export default function Credits() {
@@ -121,17 +122,14 @@ export default function Credits() {
           <section className="mb-4">
             <h2 className={`${TEXT_CLASS} font-black`}>Designed by</h2>
             <p className={`${TEXT_CLASS}`}>
-              <strong>Althea Dela Vega</strong>,&nbsp;<strong>Pb Chua</strong>
-              ,&nbsp;<strong>Abby Montayre</strong>,&nbsp;and{" "}
-              <strong>Helena Leaño</strong>
+              Althea Dela Vega,&nbsp;Pb Chua,&nbsp;Abby Montayre,&nbsp;and{" "}
+              Helena Leaño
             </p>
           </section>
           <section>
             <h2 className={`${TEXT_CLASS} font-black`}>Developed by</h2>
             <p className={`${TEXT_CLASS}`}>
-              <strong>Charles Joshua T. Uy</strong>,&nbsp;
-              <strong>Cheska Huang</strong>,&nbsp;and{" "}
-              <strong>Neil Biason</strong>
+              Charles Joshua T. Uy,&nbsp;Cheska Huang,&nbsp;and Neil Biason
             </p>
           </section>
           <section className="relative top-15 px-4 w-full flex justify-end">
@@ -150,7 +148,9 @@ export default function Credits() {
           className="fixed left-[3vw] bottom-[-1vh] w-[35vw]"
         />
       </div>
-      <NavButton link="/" text="Home" />
+      <Link to="/" className="text-white text-5xl fixed top-5 left-5">
+        <BiSolidHome />
+      </Link>
     </main>
   );
 }
