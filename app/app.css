@@ -1,9 +1,21 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap");
 
 @theme {
-	--font-sans:
-		"Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-		"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans:
+    "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: "Novel Display XCnd";
+  --font-serif: "Skolar PE VF Italics";
+  --font-serif-upright: "Skolar PE TRIAL";
+  --color-purple: #5d3e9e;
+  --color-pale-yellow: #fffbe6;
+  --color-deep-blue: #1c2a5e;
+  --color-red-violet: #7c1e7d;
+  --color-blue: #56d0d3;
+  --color-bright-yellow: #ffde50;
+  --color-rich-black: #111315;
+  --color-text-black: #1c1a1a;
 }
 
 html,
@@ -65,4 +77,330 @@ body {
 	100% {
 		transform: scale(1.06) rotate(0deg); /* the grow amount — tune to taste */
 	}
+}
+
+/* Novel Display Font */
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Black.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Black.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-BlackIt.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-BlackIt.woff") format("woff");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Bold.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Bold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-BoldIt.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-BoldIt.woff") format("woff");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Italic.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Italic.woff") format("woff");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Light.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Light.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-LightIt.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-LightIt.woff") format("woff");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Medium.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-MediumIt.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-MediumIt.woff") format("woff");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Regular.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Regular.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd SemiBd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-SemiBd.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-SemiBd.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd SemiBd";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-SemiBdIt.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-SemiBdIt.woff") format("woff");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd Ultra";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Ultra.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-Ultra.woff") format("woff");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd Ultra";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-UltraIt.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-UltraIt.woff") format("woff");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XBlack";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XBlack.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XBlack.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XBlack";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XBlackIt.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XBlackIt.woff") format("woff");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XBold";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XBold.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XBold.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XBold";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XBoldIt.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XBoldIt.woff") format("woff");
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XLight";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XLight.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XLight.woff") format("woff");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Novel Display XCnd XLight";
+  src:
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XLightIt.woff2") format("woff2"),
+    url("/fonts/NovelDisplay/NovelDisplayXCnd-XLightIt.woff") format("woff");
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Skolar PE VF Font */
+@font-face {
+  font-family: "Skolar PE VF Italics";
+  src:
+    url("/fonts/SkolarPEVF/SkolarPEVF-Its.woff2") format("woff2"),
+    url("/fonts/SkolarPEVF/SkolarPEVF-Its.woff") format("woff");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE VF Uprights";
+  src:
+    url("/fonts/SkolarPEVF/SkolarPEVF-Ups.woff2") format("woff2"),
+    url("/fonts/SkolarPEVF/SkolarPEVF-Ups.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Bd.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Bd.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-BdIt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-BdIt.woff") format("woff");
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-It.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-It.woff") format("woff");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Lt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Lt.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-LtIt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-LtIt.woff") format("woff");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Me.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Me.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-MeIt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-MeIt.woff") format("woff");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Rg.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Rg.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-Sb.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-Sb.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Skolar PE TRIAL";
+  src:
+    url("/fonts/SkolarPE/SkolarPETRIAL-SbIt.woff2") format("woff2"),
+    url("/fonts/SkolarPE/SkolarPETRIAL-SbIt.woff") format("woff");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+#day1-laptop:popover-open {
+  width: 100%;
 }
