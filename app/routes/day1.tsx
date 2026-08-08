@@ -9,7 +9,7 @@ import {
 import { animate } from "animejs";
 import { type Ref, useRef, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
-import { firstBy, values } from "remeda";
+import { find, firstBy, fromKeys, mapValues, values } from "remeda";
 import useSound from "use-sound";
 import IntroScreen from "~/components/IntroScreen";
 import WinScreen from "~/components/WinScreen";
@@ -18,6 +18,7 @@ import {
   clampToScreenPos,
   distBetweenElements,
   isOverlapping,
+  relativeAreaOfRect,
 } from "~/utils/utils";
 import drop from "/sfx/drop.m4a?url";
 import grabSfx from "/sfx/grab.m4a?url";
@@ -36,8 +37,8 @@ import {
   ITEMS,
 } from "./day1_data";
 
-const REPEL_RADIUS = 175; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 10; // nudge magnitude per % of overlap
+const REPEL_RADIUS = 200; // % gap under which a nearby idle item gets nudged
+const REPEL_STRENGTH = 50; // nudge magnitude per % of overlap
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
 
@@ -91,7 +92,6 @@ function DraggableItem({
             ? "0deg"
             : itemData.initialRotate,
         translate: `${itemPos.x}px ${itemPos.y}px`,
-        filter: `${isFocusedItem ? "drop-shadow(0 0 16px #00bfff)" : ""}`,
         zIndex: itemPos.z,
       }}
       onClick={enableFocus}
@@ -100,6 +100,9 @@ function DraggableItem({
       }} // a11y compliance
     >
       <img
+        style={{
+          filter: `${isFocusedItem ? "drop-shadow(0 0 16px #00bfff)" : ""}`, // moved here to avoid z-index issues
+        }}
         id={`day1-${itemData.name}-img`}
         alt={itemData.name}
         src={itemData.image}
@@ -114,6 +117,7 @@ function getItemNameFromID(itemName: string) {
 }
 
 const ALL_ITEM_IDs = ITEMS.map((itemData) => `day1-${itemData.name}`);
+const ALL_ITEM_NAMES = ITEMS.map((itemData) => itemData.name);
 
 function getIntersectingItems(itemID: string) {
   const allItems = ALL_ITEM_IDs.filter((item) => item !== itemID);
@@ -133,14 +137,35 @@ function getIntersectingItems(itemID: string) {
   return overlapping.map(getItemNameFromID);
 }
 
+function getCorrectItemBelow(item: string) {
+  if (!(item in CORRECT_ORDER)) {
+    return null;
+  }
+  const correctOrder = CORRECT_ORDER[item as keyof typeof CORRECT_ORDER];
+  if (correctOrder === 0) {
+    return null;
+  }
+  return find(
+    ALL_ITEM_NAMES,
+    (other) =>
+      CORRECT_ORDER[other as keyof typeof CORRECT_ORDER] === correctOrder - 1,
+  );
+}
+
+enum ItemPopOutDirections {
+  DOWN,
+  UP,
+}
+
+const defaultWinState = fromKeys(ALL_ITEM_NAMES, () => false);
+
 export default function Level1() {
   const [itemPositions, setItemPositions] = useState(defaultItemPositions());
-  const [itemWinState, setItemWinState] = useState(
-    Object.fromEntries(ITEMS.map(({ name }) => [name, false])),
-  );
+  const [itemWinState, setItemWinState] = useState(defaultWinState);
   const [focusedItem, setFocusedItem] = useState("");
   const [isIntroStage, setIsIntroStage] = useState(true);
   const { hours, minutes, seconds, pause } = useStopwatch({ autoStart: true });
+  const [itemPopOutDir, setItemPopOutDir] = useState(ItemPopOutDirections.DOWN);
   const [playRepel, { stop: stopRepelSound }] = useSound(repel1);
   const [grabSound] = useSound(grabSfx);
   const [dropSound] = useSound(drop);
@@ -148,18 +173,23 @@ export default function Level1() {
   function setItemPosition(itemName: string, itemPos: Pos) {
     const itemEl = document.getElementById(`day1-${itemName}`);
     if (!itemEl) return;
+    const newPos = clampToScreenPos(
+      itemEl.offsetWidth,
+      itemEl.offsetHeight,
+      itemPos,
+    );
+
     setItemPositions((prev) => ({
       ...prev,
-      [itemName]: clampToScreenPos(
-        itemEl.offsetWidth,
-        itemEl.offsetHeight,
-        itemPos,
+      [itemName]: newPos,
+    }));
+    setItemWinState((prev) =>
+      mapValues(prev, (_value, key) =>
+        key === itemName
+          ? isWinnablePosition(itemName, newPos)
+          : isWinnablePosition(key, newPos),
       ),
-    }));
-    setItemWinState((prev) => ({
-      ...prev,
-      [itemName]: isWinnablePosition(itemName, itemPos),
-    }));
+    );
   }
 
   function grabAnimation(dragId: string) {
@@ -264,11 +294,10 @@ export default function Level1() {
       // position.current is position of pointer
       const dx = itemCenter.x - position.current.x;
       const dy = itemCenter.y - position.current.y;
+      const REPELLED_AREA = relativeAreaOfRect(itemEl);
       if (dist > 0.001 && dist < REPEL_RADIUS) {
         // got this formula from claude
-        const push =
-          (1 - dist / REPEL_RADIUS) *
-          (item === "twobytwo" ? 0.05 : REPEL_STRENGTH);
+        const push = (1 - dist / REPEL_RADIUS) * REPELLED_AREA * REPEL_STRENGTH;
         translateItem(item, {
           x: (dx / dist) * push,
           y: (dy / dist) * push,
@@ -291,6 +320,24 @@ export default function Level1() {
       ...savedPositions[item2],
       z: canSameLayer ? savedPositions[item2].z : savedPositions[item1].z,
     };
+
+    // animate item2 to go out of stack to improve visibility / ease gameplay
+    if (itemIsInSnapPosition(item1) && itemIsInSnapPosition(item2)) {
+      animate(`#day1-${item2}-img`, {
+        y: [
+          0,
+          itemPopOutDir === ItemPopOutDirections.DOWN ? "40vh" : "-40vh",
+          0,
+        ],
+        rotate: [0, itemPopOutDir === ItemPopOutDirections.DOWN ? 10 : -10, 0],
+        ease: "inOutExpo",
+      });
+      setItemPopOutDir((prev) =>
+        prev === ItemPopOutDirections.DOWN
+          ? ItemPopOutDirections.UP
+          : ItemPopOutDirections.DOWN,
+      );
+    }
     setItemPosition(item1, itemPos1);
     setItemPosition(item2, itemPos2);
     stopRepelSound();
@@ -304,7 +351,7 @@ export default function Level1() {
         z: itemPositions[item].z,
       };
     }
-    return { ...defaultPos, z: itemPositions[item].z };
+    return { x: 0, y: 0, z: itemPositions[item].z };
   }
 
   function printTimer() {
@@ -317,27 +364,25 @@ export default function Level1() {
 
   function isWinnablePosition(itemName: string, itemPos: Pos) {
     if (!(itemName in CORRECT_ORDER)) return false;
-    const correctOrder = CORRECT_ORDER[itemName as keyof typeof CORRECT_ORDER];
-    const correctObjectsBelow = Object.keys(CORRECT_ORDER).filter(
-      (other) =>
-        CORRECT_ORDER[other as keyof typeof CORRECT_ORDER] <
-        CORRECT_ORDER[itemName as keyof typeof CORRECT_ORDER],
+    const firstItemBelow = getNearestObjectAboveOrBelow(
+      itemName,
+      CheckLayers.BELOW,
     );
-    const actualObjectsBelow = new Set(
-      getOverlappingItemsAboveOrBelow(itemName, CheckLayers.BELOW),
+    const correctFirstItemBelow = getCorrectItemBelow(itemName);
+    const snapPos = getSnapPosition(itemName);
+    console.log(
+      itemName,
+      ": ",
+      snapPos.x === itemPos.x,
+      snapPos.y === itemPos.y,
+      firstItemBelow === correctFirstItemBelow,
     );
-    if (itemName in CORRECT_POSITION) {
-      const correctPos =
-        CORRECT_POSITION[itemName as keyof typeof CORRECT_POSITION];
-      return (
-        correctPos.x === itemPos.x &&
-        correctPos.y === itemPos.y &&
-        correctObjectsBelow.length === actualObjectsBelow.size &&
-        correctObjectsBelow.every((other) => actualObjectsBelow.has(other))
-      );
-    } else {
-      return itemPos.x === 0 && itemPos.y === 0 && itemPos.z === correctOrder;
-    }
+    console.log(itemName, " snapPos: ", snapPos, "\nitemPos: ", itemPos);
+    return (
+      snapPos.x === itemPos.x &&
+      snapPos.y === itemPos.y &&
+      firstItemBelow === correctFirstItemBelow
+    );
   }
 
   function isItemInSnappableState(
@@ -351,6 +396,12 @@ export default function Level1() {
       itemPos,
       getSnapPosition(item),
     );
+  }
+
+  function itemIsInSnapPosition(item: string) {
+    const SNAP_POS = getSnapPosition(item);
+    const CUR_POS = itemPositions[item];
+    return CUR_POS.x === SNAP_POS.x && CUR_POS.y === SNAP_POS.y;
   }
 
   function translateItem(item: string, diff: Pos) {
@@ -376,6 +427,12 @@ export default function Level1() {
     return values(itemWinState).every((x: boolean) => x);
   }
 
+  function enableItemFocus(item: string) {
+    if (itemIsInSnapPosition(item)) {
+      setFocusedItem(item);
+    }
+  }
+
   return (
     <>
       {isIntroStage ? (
@@ -396,13 +453,6 @@ export default function Level1() {
               onBeforeDragStart={(event) => {
                 if (!event.operation.source) {
                   return; // no item being dragged
-                }
-                const dragItem = getItemNameFromID(
-                  event.operation.source.id as string,
-                );
-                // disable drag if the item is already solved
-                if (itemWinState[dragItem]) {
-                  event.preventDefault();
                 }
               }}
               onDragStart={(event) => {
@@ -440,7 +490,6 @@ export default function Level1() {
                 } else {
                   setItemPosition(dragItem, newPosition); // update current position
                 }
-                setFocusedItem((_prev) => dragItem);
                 dropSound();
               }}
               plugins={(defaults) => [
@@ -455,7 +504,7 @@ export default function Level1() {
                     itemData={item}
                     itemPos={itemPositions[item.name]}
                     isFocusedItem={item.name === focusedItem}
-                    enableFocus={() => setFocusedItem(item.name)}
+                    enableFocus={() => enableItemFocus(item.name)}
                     withinSnappingPosition={() => {
                       const el = document.getElementById(`day1-${item.name}`);
                       const width = el?.offsetWidth || 0;
