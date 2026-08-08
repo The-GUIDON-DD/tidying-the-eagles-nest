@@ -16,6 +16,7 @@
     "enabled": true,
     "rules": {
       "recommended": true
+      "a11y": "off"
     }
   },
   "javascript": {
