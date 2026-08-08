@@ -1,6 +1,8 @@
 import { animate, createTimeline, cubicBezier, spring } from "animejs";
 import html2canvas from "html2canvas";
 import { useEffect, useRef, useState } from "react";
+import { BiSolidHome } from "react-icons/bi";
+import { FiDownload } from "react-icons/fi";
 import { Link } from "react-router";
 import useSound from "use-sound";
 import uiPop from "/sfx/pop.m4a?url";
@@ -160,7 +162,7 @@ function WinPage1({ nextPage }: { nextPage: () => void }) {
   return (
     <div
       id="win-content-1"
-      className={`fixed inset-0 ${MAX_SCREEN_SIZE} z-50 flex flex-col gap-6 items-center justify-center hidable`}
+      className={`fixed inset-0 ${MAX_SCREEN_SIZE} z-50 flex flex-col gap-3 items-center justify-center hidable`}
     >
       <img
         alt="Well Done!"
@@ -176,7 +178,7 @@ function WinPage1({ nextPage }: { nextPage: () => void }) {
       </p>
       <button
         type="button"
-        className="flex font-display text-white text-lg font-bold gap-2 items-center uppercase"
+        className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase hover-button"
         onClick={onContinueButton}
       >
         <p>CONTINUE</p>
@@ -271,11 +273,15 @@ function WinPage2({
       >
         <button
           type="button"
-          onClick={onBackButton}
-          className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase"
+          onClick={() => {
+            popSfx();
+            shareResult();
+          }}
+          onMouseOver={() => popSfx()}
+          className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase hover-button"
         >
-          <img alt="Continue" src="/levels/back.svg" className="h-[2.5rem]" />
-          <p>Back</p>
+          <FiDownload className="text-[1.75rem]" />
+          <p>Download</p>
         </button>
         <div className="flex flex-col items-center">
           <img
@@ -286,30 +292,14 @@ function WinPage2({
           <div className="h-[75vh] w-[30vw] border-14 border-[#361876] bg-[#363636] drop-shadow-[0_15px_34px_rgba(0,0,0,0.25)] overflow-clip">
             <ShareImage bg={BGs[day]} width="100%" time={time} />
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              popSfx();
-              shareResult();
-            }}
-          >
-            <img
-              src={"/level_win/download.svg"}
-              alt="Download"
-              className="h-[5vh] mt-10"
-            />
-          </button>
         </div>
         <Link
           to="/"
-          className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase"
+          onMouseOver={() => popSfx()}
+          className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase hover-button"
         >
           <p>Home</p>
-          <img
-            alt="Continue"
-            src="/levels/back.svg"
-            className="h-[2.5rem] -scale-x-100"
-          />
+          <BiSolidHome className="text-[1.75rem]" />
         </Link>
       </div>
     </>

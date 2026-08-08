@@ -63,3 +63,13 @@ export function isOverlapping(el1: HTMLElement, el2: HTMLElement) {
     rect1.top + rect1.height < rect2.top
   );
 }
+
+export function parseTranslate(translateString: string) {
+  const [x, y] = translateString
+    .split("px")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .map((item) => parseInt(item, 10));
+
+  return { x, y };
+}

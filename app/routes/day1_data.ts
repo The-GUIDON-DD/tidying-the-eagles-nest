@@ -56,7 +56,7 @@ export const ITEMS: ItemData[] = [
     image: "/day1/Map.svg",
     width: "60%",
     initialRotate: "-6deg",
-    initialPos: { x: vwToPx("-25vw"), y: vhToPx("18vh"), z: 5 },
+    initialPos: { x: vwToPx("-25vw"), y: vhToPx("18vh"), z: 2 },
   },
   {
     name: "pencilcase",
@@ -77,14 +77,14 @@ export const ITEMS: ItemData[] = [
     image: "/day1/Fan.svg",
     width: "40%",
     initialRotate: "80deg",
-    initialPos: { x: vwToPx("-20vw"), y: vhToPx("40vh"), z: 2 },
+    initialPos: { x: vwToPx("-20vw"), y: vhToPx("40vh"), z: 11 },
   },
   {
     name: "indexcard",
     image: "/day1/IndexCard.svg",
     width: "38%",
     initialRotate: "10deg",
-    initialPos: { x: vwToPx("20vw"), y: vhToPx("20vh"), z: 6 },
+    initialPos: { x: vwToPx("20vw"), y: vhToPx("20vh"), z: 10 },
   },
   {
     name: "twobytwo",
@@ -98,14 +98,14 @@ export const ITEMS: ItemData[] = [
     image: "/day1/Umbrella.svg",
     width: "50%",
     initialRotate: "-8deg",
-    initialPos: { x: vwToPx("-20vw"), y: vhToPx("-30vh"), z: 10 },
+    initialPos: { x: vwToPx("-20vw"), y: vhToPx("-30vh"), z: 5 },
   },
   {
     name: "waterbottle",
     image: "/day1/Waterbottle.svg",
     width: "50%",
     initialRotate: "70deg",
-    initialPos: { x: vwToPx("30vw"), y: vhToPx("50vh"), z: 10 },
+    initialPos: { x: vwToPx("30vw"), y: vhToPx("50vh"), z: 6 },
   },
 ];
 

@@ -92,12 +92,12 @@ export default function Home() {
             alt="Nest"
             className="h-[120%] max-w-[120%] absolute left-[-18%] bottom-[-30%]"
           />
-          <div className="w-[70%] max-h-[90vh] max-w-[80vw] aspect-2129/2360 absolute bottom-[7%] left-0 bg-contain bg-no-repeat bg-center bg-[url('/menu/EggNotebook.svg')] flex items-center align-center">
+          <div className="w-[70%] max-h-[90vh] max-w-[80vw] aspect-2129/2360 absolute bottom-[7%] left-0 bg-contain bg-no-repeat bg-center bg-[url('/menu/EggNotebook.png')] flex items-center align-center">
             <img
               id="menu-title"
               alt="Tidying the Eagles' Nest"
               src={"/menu/title-card.svg"}
-              className="w-[55%] min-w-[30vw] relative left-[22%]"
+              className="w-[65%] min-w-[30vw] relative left-[20%]"
             />
           </div>
           <img

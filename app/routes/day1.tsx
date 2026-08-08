@@ -9,7 +9,7 @@ import {
 import { animate } from "animejs";
 import { type Ref, useRef, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
-import { find, firstBy, fromKeys, mapValues, values } from "remeda";
+import { find, firstBy } from "remeda";
 import useSound from "use-sound";
 import IntroScreen from "~/components/IntroScreen";
 import WinScreen from "~/components/WinScreen";
@@ -39,6 +39,7 @@ import {
 
 const REPEL_RADIUS = 200; // % gap under which a nearby idle item gets nudged
 const REPEL_STRENGTH = 50; // nudge magnitude per % of overlap
+const MAX_REPEL = 100;
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
 
@@ -157,11 +158,8 @@ enum ItemPopOutDirections {
   UP,
 }
 
-const defaultWinState = fromKeys(ALL_ITEM_NAMES, () => false);
-
 export default function Level1() {
   const [itemPositions, setItemPositions] = useState(defaultItemPositions());
-  const [itemWinState, setItemWinState] = useState(defaultWinState);
   const [focusedItem, setFocusedItem] = useState("");
   const [isIntroStage, setIsIntroStage] = useState(true);
   const { hours, minutes, seconds, pause } = useStopwatch({ autoStart: true });
@@ -183,13 +181,6 @@ export default function Level1() {
       ...prev,
       [itemName]: newPos,
     }));
-    setItemWinState((prev) =>
-      mapValues(prev, (_value, key) =>
-        key === itemName
-          ? isWinnablePosition(itemName, newPos)
-          : isWinnablePosition(key, newPos),
-      ),
-    );
   }
 
   function grabAnimation(dragId: string) {
@@ -295,7 +286,7 @@ export default function Level1() {
       const dx = itemCenter.x - position.current.x;
       const dy = itemCenter.y - position.current.y;
       const REPELLED_AREA = relativeAreaOfRect(itemEl);
-      if (dist > 0.001 && dist < REPEL_RADIUS) {
+      if (dist > 10 && dist < REPEL_RADIUS) {
         // got this formula from claude
         const push = (1 - dist / REPEL_RADIUS) * REPELLED_AREA * REPEL_STRENGTH;
         translateItem(item, {
@@ -354,12 +345,18 @@ export default function Level1() {
     return { x: 0, y: 0, z: itemPositions[item].z };
   }
 
+  function padNumber(n: number) {
+    if (n < 10) {
+      return `0${n}`;
+    } else return `${n}`;
+  }
+
   function printTimer() {
     pause();
     if (hours > 0) {
-      return `${hours}:${minutes}:${seconds}`;
+      return `${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}`;
     }
-    return `${minutes}:${seconds}`;
+    return `${padNumber(minutes)}:${padNumber(seconds)}`;
   }
 
   function isWinnablePosition(itemName: string, itemPos: Pos) {
@@ -370,19 +367,14 @@ export default function Level1() {
     );
     const correctFirstItemBelow = getCorrectItemBelow(itemName);
     const snapPos = getSnapPosition(itemName);
-    console.log(
-      itemName,
-      ": ",
-      snapPos.x === itemPos.x,
-      snapPos.y === itemPos.y,
-      firstItemBelow === correctFirstItemBelow,
-    );
-    console.log(itemName, " snapPos: ", snapPos, "\nitemPos: ", itemPos);
     return (
       snapPos.x === itemPos.x &&
       snapPos.y === itemPos.y &&
       firstItemBelow === correctFirstItemBelow
     );
+  }
+  function isItemInWinnablePosition(itemName: string) {
+    return isWinnablePosition(itemName, itemPositions[itemName]);
   }
 
   function isItemInSnappableState(
@@ -424,7 +416,7 @@ export default function Level1() {
   }
 
   function gameWon() {
-    return values(itemWinState).every((x: boolean) => x);
+    return ALL_ITEM_NAMES.every((item) => isItemInWinnablePosition(item));
   }
 
   function enableItemFocus(item: string) {
