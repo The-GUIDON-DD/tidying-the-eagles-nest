@@ -5,4 +5,5 @@ export default [
   route("/day/1", "routes/day1.tsx"),
   route("/levels", "routes/levels.tsx"),
   route("/credits", "routes/credits.tsx"),
+  route("/day/3", "routes/day3.tsx"),
 ] satisfies RouteConfig;
