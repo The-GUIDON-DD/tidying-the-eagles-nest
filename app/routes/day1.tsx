@@ -39,7 +39,6 @@ import {
 
 const REPEL_RADIUS = 200; // % gap under which a nearby idle item gets nudged
 const REPEL_STRENGTH = 50; // nudge magnitude per % of overlap
-const MAX_REPEL = 100;
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
 
@@ -196,6 +195,7 @@ export default function Level1() {
     });
     grabSound();
   }
+
   function getOverlappingItemsAboveOrBelow(
     itemName: string,
     checkLayers: CheckLayers,
@@ -231,14 +231,24 @@ export default function Level1() {
       return null;
     }
 
+    const hasSkippableLayer = ["umbrella", "waterbottle"].includes(itemName);
+    const layersToCheck = hasSkippableLayer
+      ? overlappingLayers.filter(
+          (other) =>
+            !["umbrella", "waterbottle"].includes(other) &&
+            itemIsInSnapPosition(other),
+        )
+      : overlappingLayers.filter((other) => itemIsInSnapPosition(other));
+
     switch (checkLayers) {
-      case CheckLayers.ABOVE:
-        return firstBy(overlappingLayers, [
+      case CheckLayers.ABOVE: {
+        return firstBy(layersToCheck, [
           (other) => itemPositions[other].z,
           "asc",
         ]);
+      }
       case CheckLayers.BELOW:
-        return firstBy(overlappingLayers, [
+        return firstBy(layersToCheck, [
           (other) => itemPositions[other].z,
           "desc",
         ]);
@@ -366,12 +376,13 @@ export default function Level1() {
       CheckLayers.BELOW,
     );
     const correctFirstItemBelow = getCorrectItemBelow(itemName);
+    const layerCheck = ["umbrella", "waterbottle"].includes(
+      correctFirstItemBelow || "",
+    )
+      ? ["umbrella", "waterbottle"].includes(firstItemBelow || "")
+      : firstItemBelow === correctFirstItemBelow;
     const snapPos = getSnapPosition(itemName);
-    return (
-      snapPos.x === itemPos.x &&
-      snapPos.y === itemPos.y &&
-      firstItemBelow === correctFirstItemBelow
-    );
+    return snapPos.x === itemPos.x && snapPos.y === itemPos.y && layerCheck;
   }
   function isItemInWinnablePosition(itemName: string) {
     return isWinnablePosition(itemName, itemPositions[itemName]);
@@ -496,7 +507,9 @@ export default function Level1() {
                     itemData={item}
                     itemPos={itemPositions[item.name]}
                     isFocusedItem={item.name === focusedItem}
-                    enableFocus={() => enableItemFocus(item.name)}
+                    enableFocus={() => {
+                      enableItemFocus(item.name);
+                    }}
                     withinSnappingPosition={() => {
                       const el = document.getElementById(`day1-${item.name}`);
                       const width = el?.offsetWidth || 0;

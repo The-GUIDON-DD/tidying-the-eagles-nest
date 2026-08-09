@@ -92,24 +92,26 @@ export default function Home() {
             alt="Nest"
             className="h-[120%] max-w-[120%] absolute left-[-18%] bottom-[-30%]"
           />
-          <div className="w-[70%] max-h-[90vh] max-w-[80vw] aspect-2129/2360 absolute bottom-[7%] left-0 bg-contain bg-no-repeat bg-center bg-[url('/menu/EggNotebook.png')] flex items-center align-center">
-            <img
-              id="menu-title"
-              alt="Tidying the Eagles' Nest"
-              src={"/menu/title-card.svg"}
-              className="w-[65%] min-w-[30vw] relative left-[20%]"
-            />
+          <div className="w-[70%] absolute bottom-[7%] left-[-10%]">
+            <div className="w-full max-h-[90vh] max-w-[80vw] aspect-2129/2360 bottom-[7%] left-0 bg-contain bg-no-repeat bg-center bg-[url('/menu/EggNotebook.png')] flex items-center justify-center">
+              <img
+                id="menu-title"
+                alt="Tidying the Eagles' Nest"
+                src={"/menu/title-card.svg"}
+                className="w-[65%] min-w-[20vw] max-w-[500px] relative left-5"
+              />
+            </div>
           </div>
           <img
             alt="Stick Pad"
             src={"/menu/StickPad.svg"}
-            className="w-[36%] absolute right-[12%] bottom-[12%]"
+            className="w-[36%] absolute lg:right-[12%] xl:right-[20%] bottom-[12%]"
           />
           <img
             id="menu-plume"
             alt="Plume"
             src={"/menu/Plume.svg"}
-            className="w-[60%] absolute left-0 bottom-[-9%] origin-[center,-50px]"
+            className="w-[60%] max-w-[800px] absolute left-[-8%] bottom-[-5%] origin-[center,-50px]"
           />
         </section>
         <section className="pt-[10%] pr-[5%]">
