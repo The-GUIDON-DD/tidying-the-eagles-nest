@@ -74,7 +74,7 @@ export const ITEMS: ItemData[] = [
   },
   {
     name: "fan",
-    image: "/day1/Fan.svg",
+    image: "/day1/Fan.webp",
     width: "40%",
     initialRotate: "80deg",
     initialPos: { x: vwToPx("-20vw"), y: vhToPx("40vh"), z: 11 },
@@ -95,14 +95,14 @@ export const ITEMS: ItemData[] = [
   },
   {
     name: "umbrella",
-    image: "/day1/Umbrella.svg",
+    image: "/day1/Umbrella.webp",
     width: "50%",
     initialRotate: "-8deg",
     initialPos: { x: vwToPx("-20vw"), y: vhToPx("-30vh"), z: 5 },
   },
   {
     name: "waterbottle",
-    image: "/day1/Waterbottle.svg",
+    image: "/day1/Waterbottle.webp",
     width: "50%",
     initialRotate: "70deg",
     initialPos: { x: vwToPx("30vw"), y: vhToPx("50vh"), z: 6 },
