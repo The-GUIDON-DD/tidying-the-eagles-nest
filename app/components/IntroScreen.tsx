@@ -133,7 +133,7 @@ export default function IntroScreen({
           transform: showLetter ? "translateY(0)" : "translateY(70vh)",
           backgroundBlendMode: "overlay, color-burn",
           background:
-            "center / cover url('/letter/grain.svg'), linear-gradient(rgba(217,217,217,0), rgba(45,45,45,0.6)), #ffefe0",
+            "center / cover url('/letter/grain.webp'), linear-gradient(rgba(217,217,217,0), rgba(45,45,45,0.6)), #ffefe0",
         }}
       >
         <h1 className="font-display font-bold text-5xl text-purple">
