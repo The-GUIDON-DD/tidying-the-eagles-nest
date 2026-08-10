@@ -172,25 +172,23 @@ function Game() {
       opacity: [0, 1],
       duration: 1500,
       ease: "inOut",
-    }).add(
-      "#drag-hint-overlay",
-      {
-        opacity: [1, 0],
-        duration: 1500,
-        ease: "inOut",
-      },
-      "<+=3000",
-    );
+    })
+      .add(
+        "#drag-hint-overlay",
+        {
+          opacity: [1, 0],
+          duration: 1500,
+          ease: "inOut",
+        },
+        "<+=3000",
+      )
+      .init();
   }, []);
 
   function setItemPosition(itemName: string, itemPos: Pos) {
     const itemEl = document.getElementById(`day1-${itemName}`);
     if (!itemEl) return;
-    const newPos = clampToScreenPos(
-      itemEl.offsetWidth,
-      itemEl.offsetHeight,
-      itemPos,
-    );
+    const newPos = clampToScreenPos(itemPos);
 
     setItemPositions((prev) => ({
       ...prev,
