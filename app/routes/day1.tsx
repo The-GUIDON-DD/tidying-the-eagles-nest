@@ -7,7 +7,7 @@ import {
   useDroppable,
 } from "@dnd-kit/react";
 import { animate, createTimeline } from "animejs";
-import { type Ref, useEffect, useRef, useState } from "react";
+import { type Ref, useCallback, useEffect, useRef, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import { find, firstBy } from "remeda";
 import useSound from "use-sound";
@@ -167,7 +167,8 @@ function Game() {
   const [dropSound] = useSound(drop);
 
   useEffect(() => {
-    const tl = createTimeline({ loop: true, loopDelay: 60000, delay: 30000 });
+    const tl = createTimeline({ loop: true, loopDelay: 60000, delay: 5000 });
+    // hint fades in and out periodically
     tl.add("#drag-hint-overlay", {
       opacity: [0, 1],
       duration: 1500,
