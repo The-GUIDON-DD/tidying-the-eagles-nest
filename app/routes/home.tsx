@@ -90,7 +90,7 @@ export default function Home() {
           <img
             src={"/menu/NestGrouped.svg"}
             alt="Nest"
-            className="h-[120%] max-w-[120%] absolute left-[-18%] bottom-[-30%]"
+            className="w-full max-w-[120%] absolute left-[-18%] bottom-[-30%]"
           />
           <div className="w-[70%] absolute bottom-[7%] left-[-10%]">
             <div className="w-full max-h-[90vh] max-w-[80vw] aspect-2129/2360 bottom-[7%] left-0 bg-contain bg-no-repeat bg-center bg-[url('/menu/EggNotebook.png')] flex items-center justify-center">
