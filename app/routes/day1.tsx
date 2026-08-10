@@ -167,7 +167,7 @@ function Game() {
   const [dropSound] = useSound(drop);
 
   useEffect(() => {
-    const tl = createTimeline({ loop: true, loopDelay: 60000, delay: 60000 });
+    const tl = createTimeline({ loop: true, loopDelay: 60000, delay: 30000 });
     tl.add("#drag-hint-overlay", {
       opacity: [0, 1],
       duration: 1500,
