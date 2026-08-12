@@ -76,7 +76,7 @@ export default function LevelsScreen() {
       icon: "/levels/day1.svg",
       link: "/day/1",
       bgColor: "var(--color-bright-yellow)",
-      unlockDate: dayjs("August 10, 2026"),
+      unlockDate: dayjs("August 12, 2026"),
     },
     {
       name: "Day 2",
@@ -84,7 +84,7 @@ export default function LevelsScreen() {
       icon: "/levels/day2.svg",
       link: "/day/2",
       bgColor: "var(--color-pale-yellow)",
-      unlockDate: dayjs("August 11, 2026"),
+      unlockDate: dayjs("August 14, 2026"),
     },
     {
       name: "Day 3",
@@ -92,7 +92,7 @@ export default function LevelsScreen() {
       icon: "/levels/day3.svg",
       link: "/day/3",
       bgColor: "var(--color-deep-blue)",
-      unlockDate: dayjs("August 12, 2026"),
+      unlockDate: dayjs("August 16, 2026"),
     },
   ];
 
