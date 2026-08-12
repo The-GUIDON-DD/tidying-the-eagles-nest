@@ -16,6 +16,17 @@ export function distBetweenElements(el1: HTMLElement, el2: HTMLElement) {
   return Math.hypot(x1 - x2, y1 - y2);
 }
 
+export function areaOfRect(el: HTMLElement) {
+  const rect = el.getBoundingClientRect();
+  return rect.width * rect.height;
+}
+
+export function relativeAreaOfRect(el: HTMLElement) {
+  const area = areaOfRect(el);
+  const windowArea = window.innerHeight * window.innerWidth;
+  return area / windowArea;
+}
+
 export function vhToPx(vh: string) {
   const percent = parseInt(vh.split("vh")[0], 10) * 0.01;
   return Math.ceil(percent * window.innerHeight);
@@ -26,16 +37,16 @@ export function vwToPx(vw: string) {
   return Math.ceil(percent * window.innerWidth);
 }
 
-export function clampToScreenPos(width, height, pos: Pos) {
+export function clampToScreenPos(pos: Pos) {
   // only 25% of height/width should be out of screen;
   return {
     x: clamp(pos.x, {
-      min: -window.innerWidth - width / 4,
-      max: window.innerWidth - width * 0.75,
+      min: -window.innerWidth / 2,
+      max: window.innerWidth / 2,
     }),
     y: clamp(pos.y, {
-      min: -window.innerHeight - height / 4,
-      max: window.innerHeight - height * 0.75,
+      min: -window.innerHeight / 2,
+      max: window.innerHeight / 2,
     }),
     z: pos.z,
   };
@@ -45,11 +56,20 @@ export function isOverlapping(el1: HTMLElement, el2: HTMLElement) {
   const rect1 = el1.getBoundingClientRect();
   const rect2 = el2.getBoundingClientRect();
 
-  // AABB Collision Check
   return !(
-    rect1.right < rect2.left ||
-    rect1.left > rect2.right ||
-    rect1.bottom < rect2.top ||
-    rect1.top > rect2.bottom
+    rect1.left > rect2.left + rect2.width ||
+    rect1.left + rect1.width < rect2.left ||
+    rect1.top > rect2.top + rect2.height ||
+    rect1.top + rect1.height < rect2.top
   );
+}
+
+export function parseTranslate(translateString: string) {
+  const [x, y] = translateString
+    .split("px")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .map((item) => parseInt(item, 10));
+
+  return { x, y };
 }

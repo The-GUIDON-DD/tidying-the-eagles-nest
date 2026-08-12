@@ -1,11 +1,17 @@
 import { createScope, createTimeline, type Scope } from "animejs";
 import { useEffect, useRef } from "react";
+import { BiSolidHome } from "react-icons/bi";
+import { Link } from "react-router";
+import useSound from "use-sound";
+import creditsSfx from "/sfx/credits.m4a?url";
 
 export default function Credits() {
   const root = useRef(null);
   const scope = useRef<Scope | null>(null);
+  const [creditsSound] = useSound(creditsSfx);
 
   useEffect(() => {
+    creditsSound();
     scope.current = createScope({ root }).add((_self) => {
       const tl = createTimeline();
       tl.add("#credits-cont", {
@@ -78,7 +84,7 @@ export default function Credits() {
     });
 
     return () => scope.current?.revert();
-  }, []);
+  }, [creditsSound]);
 
   const PAPER_CLASS =
     "aspect-3247/2794 w-[70vw] bg-linear-to-b from-[rgba(217,217,217,0.6)] to-[rgba(45,45,45,0.6)] bg-[#ffefe0] bg-blend-color-burn fixed pt-25 pb-15 px-10 min-w-[900px]";
@@ -116,17 +122,14 @@ export default function Credits() {
           <section className="mb-4">
             <h2 className={`${TEXT_CLASS} font-black`}>Designed by</h2>
             <p className={`${TEXT_CLASS}`}>
-              <strong>Althea Dela Vega</strong>,&nbsp;<strong>Pb Chua</strong>
-              ,&nbsp;<strong>Abby Montayre</strong>,&nbsp;and{" "}
-              <strong>Helena Leaño</strong>
+              Althea Dela Vega,&nbsp;Pb Chua,&nbsp;Abby Montayre,&nbsp;and{" "}
+              Helena Leaño
             </p>
           </section>
           <section>
             <h2 className={`${TEXT_CLASS} font-black`}>Developed by</h2>
             <p className={`${TEXT_CLASS}`}>
-              <strong>Charles Joshua T. Uy</strong>,&nbsp;
-              <strong>Cheska Huang</strong>,&nbsp;and{" "}
-              <strong>Neil Biason</strong>
+              Charles Joshua T. Uy,&nbsp;Cheska Huang,&nbsp;and Neil Biason
             </p>
           </section>
           <section className="relative top-15 px-4 w-full flex justify-end">
@@ -145,6 +148,9 @@ export default function Credits() {
           className="fixed left-[3vw] bottom-[-1vh] w-[35vw]"
         />
       </div>
+      <Link to="/" className="text-white text-5xl fixed top-5 left-5">
+        <BiSolidHome />
+      </Link>
     </main>
   );
 }

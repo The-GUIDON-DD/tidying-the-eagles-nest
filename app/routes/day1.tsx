@@ -6,10 +6,10 @@ import {
   useDraggable,
   useDroppable,
 } from "@dnd-kit/react";
-import { animate } from "animejs";
-import { type Ref, useRef, useState } from "react";
+import { animate, createTimeline } from "animejs";
+import { type Ref, useEffect, useRef, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
-import { firstBy, values } from "remeda";
+import { find, firstBy } from "remeda";
 import useSound from "use-sound";
 import IntroScreen from "~/components/IntroScreen";
 import WinScreen from "~/components/WinScreen";
@@ -18,6 +18,7 @@ import {
   clampToScreenPos,
   distBetweenElements,
   isOverlapping,
+  relativeAreaOfRect,
 } from "~/utils/utils";
 import drop from "/sfx/drop.m4a?url";
 import grabSfx from "/sfx/grab.m4a?url";
@@ -36,8 +37,8 @@ import {
   ITEMS,
 } from "./day1_data";
 
-const REPEL_RADIUS = 175; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 10; // nudge magnitude per % of overlap
+const REPEL_RADIUS = 200; // % gap under which a nearby idle item gets nudged
+const REPEL_STRENGTH = 50; // nudge magnitude per % of overlap
 const MAX_SCREEN_SIZE =
   "w-screen h-screen max-w-screen min-w-screen max-h-screen min-h-screen";
 
@@ -91,7 +92,6 @@ function DraggableItem({
             ? "0deg"
             : itemData.initialRotate,
         translate: `${itemPos.x}px ${itemPos.y}px`,
-        filter: `${isFocusedItem ? "drop-shadow(0 0 16px #00bfff)" : ""}`,
         zIndex: itemPos.z,
       }}
       onClick={enableFocus}
@@ -100,6 +100,9 @@ function DraggableItem({
       }} // a11y compliance
     >
       <img
+        style={{
+          filter: `${isFocusedItem ? "drop-shadow(0 0 16px #00bfff)" : ""}`, // moved here to avoid z-index issues
+        }}
         id={`day1-${itemData.name}-img`}
         alt={itemData.name}
         src={itemData.image}
@@ -114,6 +117,7 @@ function getItemNameFromID(itemName: string) {
 }
 
 const ALL_ITEM_IDs = ITEMS.map((itemData) => `day1-${itemData.name}`);
+const ALL_ITEM_NAMES = ITEMS.map((itemData) => itemData.name);
 
 function getIntersectingItems(itemID: string) {
   const allItems = ALL_ITEM_IDs.filter((item) => item !== itemID);
@@ -133,32 +137,63 @@ function getIntersectingItems(itemID: string) {
   return overlapping.map(getItemNameFromID);
 }
 
-export default function Level1() {
-  const [itemPositions, setItemPositions] = useState(defaultItemPositions());
-  const [itemWinState, setItemWinState] = useState(
-    Object.fromEntries(ITEMS.map(({ name }) => [name, false])),
+function getCorrectItemBelow(item: string) {
+  if (!(item in CORRECT_ORDER)) {
+    return null;
+  }
+  const correctOrder = CORRECT_ORDER[item as keyof typeof CORRECT_ORDER];
+  if (correctOrder === 0) {
+    return null;
+  }
+  return find(
+    ALL_ITEM_NAMES,
+    (other) =>
+      CORRECT_ORDER[other as keyof typeof CORRECT_ORDER] === correctOrder - 1,
   );
+}
+
+enum ItemPopOutDirections {
+  DOWN,
+  UP,
+}
+
+function Game() {
+  const [itemPositions, setItemPositions] = useState(defaultItemPositions());
   const [focusedItem, setFocusedItem] = useState("");
-  const [isIntroStage, setIsIntroStage] = useState(true);
   const { hours, minutes, seconds, pause } = useStopwatch({ autoStart: true });
+  const [itemPopOutDir, setItemPopOutDir] = useState(ItemPopOutDirections.DOWN);
   const [playRepel, { stop: stopRepelSound }] = useSound(repel1);
   const [grabSound] = useSound(grabSfx);
   const [dropSound] = useSound(drop);
 
+  useEffect(() => {
+    const tl = createTimeline({ loop: true, loopDelay: 60000, delay: 5000 });
+    // hint fades in and out periodically
+    tl.add("#drag-hint-overlay", {
+      opacity: [0, 1],
+      duration: 1500,
+      ease: "inOut",
+    })
+      .add(
+        "#drag-hint-overlay",
+        {
+          opacity: [1, 0],
+          duration: 1500,
+          ease: "inOut",
+        },
+        "<+=3000",
+      )
+      .init();
+  }, []);
+
   function setItemPosition(itemName: string, itemPos: Pos) {
     const itemEl = document.getElementById(`day1-${itemName}`);
     if (!itemEl) return;
+    const newPos = clampToScreenPos(itemPos);
+
     setItemPositions((prev) => ({
       ...prev,
-      [itemName]: clampToScreenPos(
-        itemEl.offsetWidth,
-        itemEl.offsetHeight,
-        itemPos,
-      ),
-    }));
-    setItemWinState((prev) => ({
-      ...prev,
-      [itemName]: isWinnablePosition(itemName, itemPos),
+      [itemName]: newPos,
     }));
   }
 
@@ -175,6 +210,7 @@ export default function Level1() {
     });
     grabSound();
   }
+
   function getOverlappingItemsAboveOrBelow(
     itemName: string,
     checkLayers: CheckLayers,
@@ -210,14 +246,24 @@ export default function Level1() {
       return null;
     }
 
+    const hasSkippableLayer = ["umbrella", "waterbottle"].includes(itemName);
+    const layersToCheck = hasSkippableLayer
+      ? overlappingLayers.filter(
+          (other) =>
+            !["umbrella", "waterbottle"].includes(other) &&
+            itemIsInSnapPosition(other),
+        )
+      : overlappingLayers.filter((other) => itemIsInSnapPosition(other));
+
     switch (checkLayers) {
-      case CheckLayers.ABOVE:
-        return firstBy(overlappingLayers, [
+      case CheckLayers.ABOVE: {
+        return firstBy(layersToCheck, [
           (other) => itemPositions[other].z,
           "asc",
         ]);
+      }
       case CheckLayers.BELOW:
-        return firstBy(overlappingLayers, [
+        return firstBy(layersToCheck, [
           (other) => itemPositions[other].z,
           "desc",
         ]);
@@ -264,11 +310,10 @@ export default function Level1() {
       // position.current is position of pointer
       const dx = itemCenter.x - position.current.x;
       const dy = itemCenter.y - position.current.y;
-      if (dist > 0.001 && dist < REPEL_RADIUS) {
+      const REPELLED_AREA = relativeAreaOfRect(itemEl);
+      if (dist > 10 && dist < REPEL_RADIUS) {
         // got this formula from claude
-        const push =
-          (1 - dist / REPEL_RADIUS) *
-          (item === "twobytwo" ? 0.05 : REPEL_STRENGTH);
+        const push = (1 - dist / REPEL_RADIUS) * REPELLED_AREA * REPEL_STRENGTH;
         translateItem(item, {
           x: (dx / dist) * push,
           y: (dy / dist) * push,
@@ -280,14 +325,35 @@ export default function Level1() {
 
   function switchItemLayers(item1: string, item2: string) {
     const savedPositions = { ...itemPositions };
+    const canSameLayer =
+      (item1 === "waterbottle" || item1 === "umbrella") &&
+      (item2 === "waterbottle" || item2 === "umbrella");
     const itemPos1 = {
       ...savedPositions[item1],
       z: savedPositions[item2].z,
     };
     const itemPos2 = {
       ...savedPositions[item2],
-      z: savedPositions[item1].z,
+      z: canSameLayer ? savedPositions[item2].z : savedPositions[item1].z,
     };
+
+    // animate item2 to go out of stack to improve visibility / ease gameplay
+    if (itemIsInSnapPosition(item1) && itemIsInSnapPosition(item2)) {
+      animate(`#day1-${item2}-img`, {
+        y: [
+          0,
+          itemPopOutDir === ItemPopOutDirections.DOWN ? "40vh" : "-40vh",
+          0,
+        ],
+        rotate: [0, itemPopOutDir === ItemPopOutDirections.DOWN ? 10 : -10, 0],
+        ease: "inOutExpo",
+      });
+      setItemPopOutDir((prev) =>
+        prev === ItemPopOutDirections.DOWN
+          ? ItemPopOutDirections.UP
+          : ItemPopOutDirections.DOWN,
+      );
+    }
     setItemPosition(item1, itemPos1);
     setItemPosition(item2, itemPos2);
     stopRepelSound();
@@ -301,31 +367,40 @@ export default function Level1() {
         z: itemPositions[item].z,
       };
     }
-    return { ...defaultPos, z: itemPositions[item].z };
+    return { x: 0, y: 0, z: itemPositions[item].z };
+  }
+
+  function padNumber(n: number) {
+    if (n < 10) {
+      return `0${n}`;
+    } else return `${n}`;
   }
 
   function printTimer() {
     pause();
     if (hours > 0) {
-      return `${hours}:${minutes}:${seconds}`;
+      return `${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}`;
     }
-    return `${minutes}:${seconds}`;
+    return `${padNumber(minutes)}:${padNumber(seconds)}`;
   }
 
   function isWinnablePosition(itemName: string, itemPos: Pos) {
     if (!(itemName in CORRECT_ORDER)) return false;
-    const correctOrder = CORRECT_ORDER[itemName as keyof typeof CORRECT_ORDER];
-    if (itemName in CORRECT_POSITION) {
-      const correctPos =
-        CORRECT_POSITION[itemName as keyof typeof CORRECT_POSITION];
-      return (
-        correctPos.x === itemPos.x &&
-        correctPos.y === itemPos.y &&
-        itemPos.z === correctOrder
-      );
-    } else {
-      return itemPos.x === 0 && itemPos.y === 0 && itemPos.z === correctOrder;
-    }
+    const firstItemBelow = getNearestObjectAboveOrBelow(
+      itemName,
+      CheckLayers.BELOW,
+    );
+    const correctFirstItemBelow = getCorrectItemBelow(itemName);
+    const layerCheck = ["umbrella", "waterbottle"].includes(
+      correctFirstItemBelow || "",
+    )
+      ? ["umbrella", "waterbottle"].includes(firstItemBelow || "")
+      : firstItemBelow === correctFirstItemBelow;
+    const snapPos = getSnapPosition(itemName);
+    return snapPos.x === itemPos.x && snapPos.y === itemPos.y && layerCheck;
+  }
+  function isItemInWinnablePosition(itemName: string) {
+    return isWinnablePosition(itemName, itemPositions[itemName]);
   }
 
   function isItemInSnappableState(
@@ -339,6 +414,12 @@ export default function Level1() {
       itemPos,
       getSnapPosition(item),
     );
+  }
+
+  function itemIsInSnapPosition(item: string) {
+    const SNAP_POS = getSnapPosition(item);
+    const CUR_POS = itemPositions[item];
+    return CUR_POS.x === SNAP_POS.x && CUR_POS.y === SNAP_POS.y;
   }
 
   function translateItem(item: string, diff: Pos) {
@@ -361,107 +442,119 @@ export default function Level1() {
   }
 
   function gameWon() {
-    return values(itemWinState).every((x: boolean) => x);
+    return ALL_ITEM_NAMES.every((item) => isItemInWinnablePosition(item));
   }
+
+  function enableItemFocus(item: string) {
+    if (itemIsInSnapPosition(item)) {
+      setFocusedItem(item);
+    }
+  }
+
+  return (
+    <>
+      <main
+        className={`${MAX_SCREEN_SIZE} overflow-clip bg-radial from-[#ffad6f] to-[#bd5d44] grid grid-cols-1 grid-rows-1 place-items-center py-[10%] px-[20%]`}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown") {
+            switchLayers(LayerDirection.DOWN);
+          } else if (event.key === "ArrowUp") {
+            switchLayers(LayerDirection.UP);
+          }
+        }}
+      >
+        <DragDropProvider
+          onBeforeDragStart={(event) => {
+            if (!event.operation.source) {
+              return; // no item being dragged
+            }
+          }}
+          onDragStart={(event) => {
+            if (!event.operation.source) {
+              return;
+            }
+
+            const dragId = event.operation.source.id;
+            if (dragId) {
+              grabAnimation(dragId as string);
+            }
+          }}
+          onDragMove={(event) => repelObjectsWhileDragged(event)}
+          onDragEnd={({ operation }) => {
+            /* Prevents items snapping back to their old position after drag */
+            if (!operation.source) {
+              return;
+            }
+            // Name of item being dragged
+            const dragItem = getItemNameFromID(operation.source.id as string);
+            const newPosition: Pos = {
+              x: itemPositions[dragItem].x + operation.transform.x,
+              y: itemPositions[dragItem].y + operation.transform.y,
+              z: itemPositions[dragItem].z,
+            };
+
+            const dragEl = document.getElementById(
+              operation.source.id as string,
+            );
+
+            if (isItemInSnappableState(dragItem, newPosition, dragEl)) {
+              snapItem(dragItem);
+            } else {
+              setItemPosition(dragItem, newPosition); // update current position
+            }
+            dropSound();
+          }}
+          plugins={(defaults) => [
+            ...defaults,
+            Feedback.configure({ dropAnimation: null }),
+          ]}
+        >
+          {ITEMS.map((item) => {
+            return (
+              <DraggableItem
+                key={item.name}
+                itemData={item}
+                itemPos={itemPositions[item.name]}
+                isFocusedItem={item.name === focusedItem}
+                enableFocus={() => {
+                  enableItemFocus(item.name);
+                }}
+                withinSnappingPosition={() => {
+                  const el = document.getElementById(`day1-${item.name}`);
+                  const width = el?.offsetWidth || 0;
+                  const height = el?.offsetHeight || 0;
+                  return withinSnappingPosition(
+                    width,
+                    height,
+                    itemPositions[item.name],
+                    getSnapPosition(item.name),
+                  );
+                }}
+              />
+            );
+          })}
+        </DragDropProvider>
+      </main>
+      <div
+        id="drag-hint-overlay"
+        className="w-[60vw] h-[60vh] bg-[rgba(242,239,220,0.8)] border-dashed border-5 border-purple z-100 rounded-2xl flex items-center justify-center text-purple font-display text-3xl font-bold pointer-events-none fixed left-[20vw] top-[20vh]"
+      >
+        <p>Drag items to the center to solve the puzzle!</p>
+      </div>
+      {gameWon() && <WinScreen time={printTimer()} />}
+    </>
+  );
+}
+
+export default function Level1() {
+  const [isIntroStage, setIsIntroStage] = useState(true);
 
   return (
     <>
       {isIntroStage ? (
         <IntroScreen onStart={() => setIsIntroStage(false)} />
       ) : (
-        <>
-          <main
-            className={`${MAX_SCREEN_SIZE} overflow-clip bg-radial from-[#ffad6f] to-[#bd5d44] grid grid-cols-1 grid-rows-1 place-items-center py-[10%] px-[20%]`}
-            onKeyDown={(event) => {
-              if (event.key === "ArrowDown") {
-                switchLayers(LayerDirection.DOWN);
-              } else if (event.key === "ArrowUp") {
-                switchLayers(LayerDirection.UP);
-              }
-            }}
-          >
-            <DragDropProvider
-              onBeforeDragStart={(event) => {
-                if (!event.operation.source) {
-                  return; // no item being dragged
-                }
-                const dragItem = getItemNameFromID(
-                  event.operation.source.id as string,
-                );
-                // disable drag if the item is already solved
-                if (itemWinState[dragItem]) {
-                  event.preventDefault();
-                }
-              }}
-              onDragStart={(event) => {
-                if (!event.operation.source) {
-                  return;
-                }
-
-                const dragId = event.operation.source.id;
-                if (dragId) {
-                  grabAnimation(dragId as string);
-                }
-              }}
-              onDragMove={(event) => repelObjectsWhileDragged(event)}
-              onDragEnd={({ operation }) => {
-                /* Prevents items snapping back to their old position after drag */
-                if (!operation.source) {
-                  return;
-                }
-                // Name of item being dragged
-                const dragItem = getItemNameFromID(
-                  operation.source.id as string,
-                );
-                const newPosition: Pos = {
-                  x: itemPositions[dragItem].x + operation.transform.x,
-                  y: itemPositions[dragItem].y + operation.transform.y,
-                  z: itemPositions[dragItem].z,
-                };
-
-                const dragEl = document.getElementById(
-                  operation.source.id as string,
-                );
-
-                if (isItemInSnappableState(dragItem, newPosition, dragEl)) {
-                  snapItem(dragItem);
-                } else {
-                  setItemPosition(dragItem, newPosition); // update current position
-                }
-                setFocusedItem((_prev) => dragItem);
-                dropSound();
-              }}
-              plugins={(defaults) => [
-                ...defaults,
-                Feedback.configure({ dropAnimation: null }),
-              ]}
-            >
-              {ITEMS.map((item) => {
-                return (
-                  <DraggableItem
-                    key={item.name}
-                    itemData={item}
-                    itemPos={itemPositions[item.name]}
-                    isFocusedItem={item.name === focusedItem}
-                    enableFocus={() => setFocusedItem(item.name)}
-                    withinSnappingPosition={() => {
-                      const el = document.getElementById(`day1-${item.name}`);
-                      const width = el?.offsetWidth || 0;
-                      const height = el?.offsetHeight || 0;
-                      return withinSnappingPosition(
-                        width,
-                        height,
-                        itemPositions[item.name],
-                        getSnapPosition(item.name),
-                      );
-                    }}
-                  />
-                );
-              })}
-            </DragDropProvider>
-          </main>
-          {gameWon() && <WinScreen time={printTimer()} />}
-        </>
+        <Game />
       )}
     </>
   );
