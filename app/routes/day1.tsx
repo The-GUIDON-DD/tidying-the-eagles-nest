@@ -538,6 +538,7 @@ function Game() {
       <div
         id="drag-hint-overlay"
         className="w-[60vw] h-[60vh] bg-[rgba(242,239,220,0.8)] border-dashed border-5 border-purple z-100 rounded-2xl flex items-center justify-center text-purple font-display text-3xl font-bold pointer-events-none fixed left-[20vw] top-[20vh]"
+        style={{ display: gameWon() ? "none" : "flex" }}
       >
         <p>Drag items to the center to solve the puzzle!</p>
       </div>
