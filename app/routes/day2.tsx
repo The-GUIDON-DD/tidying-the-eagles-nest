@@ -253,6 +253,27 @@ function DraggableItem({
   );
 }
 
+function Bar() {
+  return (
+    <div className="w-full flex flex-col items-stretch h-[10vh]">
+      <div className="h-[78%] bg-[#d9d9d9]" />
+      <div className="h-[7%] bg-[#fff2f2]" />
+      <div className="h-[15%] bg-[#918080]" />
+    </div>
+  );
+}
+
+function BarBG() {
+  return (
+    <div className="fixed inset-0 size-full flex flex-col justify-center items-stretch gap-[10vh]">
+      <Bar />
+      <Bar />
+      <Bar />
+      <Bar />
+    </div>
+  );
+}
+
 export default function Day2() {
   const navigate = useNavigate();
   const stageRef = useRef<HTMLDivElement>(null);
@@ -438,7 +459,8 @@ export default function Day2() {
   }
 
   return (
-    <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[#4a86a8]">
+    <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[url(/day2/bg.svg)] bg-cover">
+      <BarBG />
       {dev && (
         <div className="absolute left-3 top-3 z-[60] flex gap-2">
           <button
@@ -499,7 +521,6 @@ export default function Day2() {
         style={{ width: "min(100dvw, 140.63vh)" }}
       >
         {/* tabletop behind the tray */}
-        <div className="day2-tabletop absolute inset-0" />
 
         {/* the tray itself */}
         <img
