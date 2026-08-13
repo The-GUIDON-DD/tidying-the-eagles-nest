@@ -8,6 +8,7 @@ import {
 } from "@dnd-kit/react";
 import { animate, createTimeline } from "animejs";
 import { type Ref, useEffect, useRef, useState } from "react";
+import { BsArrowDownSquare, BsArrowUpSquare } from "react-icons/bs";
 import { useStopwatch } from "react-timer-hook";
 import { find, firstBy } from "remeda";
 import useSound from "use-sound";
@@ -542,7 +543,12 @@ function Game() {
       >
         <p>Drag items to the center to solve the puzzle!</p>
       </div>
-      {gameWon() && <WinScreen time={printTimer()} />}
+      {gameWon() && (
+        <WinScreen
+          winText="Well done! Remember that one of the most telling marks of a true wanderer is having everything they need within arm’s reach. Good luck, and may the gear in your satchel bring you to success! Don’t celebrate just yet, though, for there is one more trial you forgot to consider."
+          time={printTimer()}
+        />
+      )}
     </>
   );
 }
@@ -553,7 +559,21 @@ export default function Level1() {
   return (
     <>
       {isIntroStage ? (
-        <IntroScreen onStart={() => setIsIntroStage(false)} />
+        <IntroScreen onStart={() => setIsIntroStage(false)}>
+          <p className="font-serif text-center text-xl">
+            Before you know it, you'll be entering the Dreamlands. Organize
+            these items on your desk to ensure that you have everything you need
+            for your first day.
+          </p>
+          <p className="font-serif text-center text-xl">
+            To keep your space clean,{" "}
+            <strong className="font-black text-purple">click</strong> on an item
+            to focus it and press the{" "}
+            <BsArrowUpSquare className="inline mr-1" />
+            <BsArrowDownSquare className="inline" /> keys to move it up and down
+            the stack.
+          </p>
+        </IntroScreen>
       ) : (
         <Game />
       )}

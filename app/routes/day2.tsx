@@ -2,12 +2,14 @@ import { configurator, Modifier } from "@dnd-kit/abstract";
 import { DragDropProvider, useDraggable } from "@dnd-kit/react";
 import type { MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import "./day2.css";
 import useSound from "use-sound";
+import IntroScreen from "~/components/IntroScreen";
+import WinScreen from "~/components/WinScreen";
 import dropSfx from "/sfx/drop.m4a?url";
 import grabSfx from "/sfx/grab.m4a?url";
-import repelSfx from "/sfx/repel1m4a?url";
+import repelSfx from "/sfx/repel1.m4a?url";
 import initialData from "./day2.initial.json";
 import solutionsData from "./day2.solutions.json";
 
@@ -79,7 +81,7 @@ const SOLUTIONS = solutionsData as Board[];
 
 const WIN_TOL = 0.45;
 
-const HOVER_SNAP_PCT = 3.2;
+const HOVER_SNAP_PCT = 8;
 
 const REPEL_RADIUS = 7;
 const REPEL_STRENGTH = 0.25;
@@ -241,6 +243,10 @@ function Bar() {
 function BarBG() {
   return (
     <div className="fixed inset-0 size-full flex flex-col justify-center items-stretch gap-[10vh]">
+      <p className="text-white text-3xl italic w-full font-serif text-center absolute top-15">
+        <strong>Hint:</strong> Items snap in place when you put them in the
+        correct position
+      </p>
       <Bar />
       <Bar />
       <Bar />
@@ -249,7 +255,7 @@ function BarBG() {
   );
 }
 
-export default function Day2() {
+function Game() {
   const navigate = useNavigate();
   const stageRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -395,28 +401,10 @@ export default function Day2() {
     <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[url(/day2/bg.svg)] bg-cover">
       <BarBG />
       {isSolved && !finished && (
-        <div className="day2-backdrop absolute inset-0 z-65 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
-          <div
-            className="day2-pop w-full max-w-xl bg-[#FFFBE6] px-8 py-8 text-center text-black shadow-2xl sm:px-12 sm:py-10"
-            style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
-          >
-            <h2 className="text-3xl font-extrabold sm:text-4xl">Bravo!</h2>
-            <p className="mt-5 text-base leading-8 sm:text-lg sm:leading-9">
-              You have stocked up energy for your next move. May your sharper
-              mind and brighter spirit lead your path forward. After all, a
-              well-fed wanderer is a formidable one. Now armed with the right
-              nutrition, your last mission is to gain ample strength to get you
-              through any physical challenges that may come your way.
-            </p>
-            <Link
-              to="/day3"
-              onClick={handleNextLevel}
-              className="mt-8 inline-block rounded-xl bg-[#9d9d9d] px-10 py-3 text-lg transition hover:bg-[#8b8b8b]"
-            >
-              Next Level ↓
-            </Link>
-          </div>
-        </div>
+        <WinScreen
+          time="00:00"
+          winText="Bravo! You have stocked up energy for your next move. May your sharper mind and brighter spirit lead your path forward. After all, a well-fed wanderer is a formidable one. Now armed with the right nutrition, your last mission is to gain ample strength to get you through any physical challenges that may come your way."
+        />
       )}
 
       {/* Aspect-locked stage: the reference photo is 1440x1024, so every
@@ -501,5 +489,30 @@ export default function Day2() {
         </DragDropProvider>
       </div>
     </main>
+  );
+}
+
+export default function Day2() {
+  const [isIntroStage, setIsIntroStage] = useState(true);
+
+  return (
+    <>
+      {isIntroStage ? (
+        <IntroScreen onStart={() => setIsIntroStage(false)}>
+          <p className="font-serif text-center text-xl">
+            As you continue to explore new landscapes, you realize that your
+            satchel contains everything you require, except sustenance. It is
+            tough to keep traveling on an empty stomach, but thankfully, you
+            find a place to answer your needs. Step inside the Gonzaga
+            Cafeteria, organize your meal, and watch out for any falling chairs!
+          </p>
+          <p className="font-serif text-center text-2xl italic">
+            <strong>Hint:</strong> Items snap to their correct position.
+          </p>
+        </IntroScreen>
+      ) : (
+        <Game />
+      )}
+    </>
   );
 }
