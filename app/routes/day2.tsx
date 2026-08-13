@@ -4,9 +4,11 @@ import type { MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import "./day2.css";
+import { useStopwatch } from "react-timer-hook";
 import useSound from "use-sound";
 import IntroScreen from "~/components/IntroScreen";
 import WinScreen from "~/components/WinScreen";
+import { printTimer } from "~/utils/utils";
 import dropSfx from "/sfx/drop.m4a?url";
 import grabSfx from "/sfx/grab.m4a?url";
 import repelSfx from "/sfx/repel1.m4a?url";
@@ -50,13 +52,6 @@ const FIXED: FixedItem[] = [
   },
   { id: "tissue", src: "tissue.png", left: 67.36, top: 47.85, width: 8.19 },
   { id: "fork", src: "fork.png", left: 71.18, top: 48.34, width: 2.92 },
-  {
-    id: "ice-cream",
-    src: "ice cream.png",
-    left: 18.47,
-    top: 51.95,
-    width: 14.86,
-  },
 ];
 
 const ITEMS: Item[] = [
@@ -73,6 +68,11 @@ const ITEMS: Item[] = [
   { id: "calamansi-sliced", src: "sliced calamansi.png", width: 4.38 },
   { id: "chili-a", src: "chili2.png", width: 6.81, flipX: true },
   { id: "chili-b", src: "chili2.png", width: 6.81, flipY: true },
+  {
+    id: "ice-cream",
+    src: "ice cream.png",
+    width: 14.86,
+  },
 ];
 
 const INITIAL = initialData as Board;
@@ -274,6 +274,7 @@ function Game() {
     "enter",
   );
   const [repelSound] = useSound(repelSfx);
+  const { hours, minutes, seconds, pause } = useStopwatch({ autoStart: true });
   useEffect(() => {
     const t = setTimeout(() => setStagePhase("idle"), ENTER_MS);
     return () => clearTimeout(t);
@@ -397,12 +398,18 @@ function Game() {
     };
   }
 
+  function printGameTimer() {
+    pause();
+    return printTimer(hours, minutes, seconds);
+  }
+
   return (
     <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[url(/day2/bg.svg)] bg-cover">
       <BarBG />
       {isSolved && !finished && (
         <WinScreen
-          time="00:00"
+          day={2}
+          time={printGameTimer()}
           winText="Bravo! You have stocked up energy for your next move. May your sharper mind and brighter spirit lead your path forward. After all, a well-fed wanderer is a formidable one. Now armed with the right nutrition, your last mission is to gain ample strength to get you through any physical challenges that may come your way."
         />
       )}

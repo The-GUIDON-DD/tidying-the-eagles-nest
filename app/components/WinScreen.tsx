@@ -15,6 +15,7 @@ interface BGIndex {
 }
 const BGs: BGIndex = {
   1: "/day1/sharebg.png",
+  2: "/day2/sharebg.png",
 };
 
 const MAX_SCREEN_SIZE =
