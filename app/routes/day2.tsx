@@ -4,6 +4,10 @@ import type { MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import "./day2.css";
+import useSound from "use-sound";
+import dropSfx from "/sfx/drop.m4a?url";
+import grabSfx from "/sfx/grab.m4a?url";
+import repelSfx from "/sfx/repel1m4a?url";
 import initialData from "./day2.initial.json";
 import solutionsData from "./day2.solutions.json";
 
@@ -81,9 +85,6 @@ const REPEL_RADIUS = 7;
 const REPEL_STRENGTH = 0.25;
 const REPEL_MAX = 0.8;
 
-const SHUFFLE_TRIES = 40;
-const SHUFFLE_MAX_OVERLAP = 0.12;
-
 const ENTER_MS = 750;
 const EXIT_MS = 650;
 
@@ -110,32 +111,6 @@ function clampToScreen(
     left: Math.min(b.maxLeft, Math.max(b.minLeft, left)),
     top: Math.min(b.maxTop, Math.max(b.minTop, top)),
   };
-}
-
-type Box = { x0: number; x1: number; y0: number; y1: number };
-
-function contentPxBox(
-  left: number,
-  top: number,
-  width: number,
-  h: number,
-  rect: DOMRect,
-): Box {
-  const pxW = (width / 100) * rect.width;
-  const pxH = (h / 100) * rect.height;
-  const x = (left / 100) * rect.width;
-  const y = (top / 100) * rect.height;
-  return { x0: x, x1: x + pxW, y0: y, y1: y + pxH };
-}
-
-function overlapFrac(a: Box, b: Box): number {
-  const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0));
-  const iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
-  const inter = ix * iy;
-  if (inter <= 0) return 0;
-  const areaA = (a.x1 - a.x0) * (a.y1 - a.y0);
-  const areaB = (b.x1 - b.x0) * (b.y1 - b.y0);
-  return inter / Math.min(areaA, areaB);
 }
 
 const defaultPositions = (): Record<string, Pos> =>
@@ -292,76 +267,11 @@ export default function Day2() {
   const [stagePhase, setStagePhase] = useState<"enter" | "idle" | "exit">(
     "enter",
   );
+  const [repelSound] = useSound(repelSfx);
   useEffect(() => {
     const t = setTimeout(() => setStagePhase("idle"), ENTER_MS);
     return () => clearTimeout(t);
   }, []);
-
-  function handleNextLevel(e: MouseEvent) {
-    e.preventDefault();
-    setFinished(true);
-    setStagePhase("exit");
-    setTimeout(() => navigate("/day3"), EXIT_MS);
-  }
-  // dev mode: add ?dev=1 to the URL for the tweak panel (live x/y, editable
-  // width, Copy button) with the hover-lock and repel disabled so items can
-  // be dragged to exact spots — e.g. to capture alternate valid layouts.
-  const [dev, setDev] = useState(false);
-  const [widths, setWidths] = useState<Record<string, number>>(() =>
-    Object.fromEntries(ITEMS.map((i) => [i.id, i.width])),
-  );
-  useEffect(() => {
-    setDev(new URLSearchParams(window.location.search).has("dev"));
-  }, []);
-
-  const round = (n: number) => Math.round(n * 10) / 10;
-
-  function copyValues() {
-    const lines = ITEMS.map((it) => {
-      const p = pos[it.id];
-      return `    "${it.id}": { "left": ${round(p.left)}, "top": ${round(p.top)} },`;
-    }).join("\n");
-    navigator.clipboard?.writeText(`  {\n${lines}\n  },`);
-  }
-
-  const isSolved = SOLUTIONS.some((board) =>
-    ITEMS.every((i) => {
-      const s = board[i.id];
-      return (
-        s &&
-        Math.abs(pos[i.id].left - s.left) < WIN_TOL &&
-        Math.abs(pos[i.id].top - s.top) < WIN_TOL
-      );
-    }),
-  );
-
-  function handleDragEnd(event: {
-    operation: {
-      source: { id: string | number } | null;
-      transform: { x: number; y: number };
-    };
-    canceled: boolean;
-  }) {
-    setDragActive(false);
-    const { operation, canceled } = event;
-    const source = operation.source;
-    const rect = stageRef.current?.getBoundingClientRect();
-    if (canceled || !source || !rect) return;
-
-    const id = String(source.id);
-    if (!ITEMS.some((i) => i.id === id)) return;
-
-    setPos((prev) => {
-      // The transform here already reflects SnapToTarget's hover-lock, so
-      // releasing anywhere within the lock radius lands exactly on target.
-      const left = prev[id].left + (operation.transform.x / rect.width) * 100;
-      const top = prev[id].top + (operation.transform.y / rect.height) * 100;
-      return {
-        ...prev,
-        [id]: clampToScreen(left, top, widths[id], heightPct(id, rect), rect),
-      };
-    });
-  }
 
   // Magnetic repel: while dragging, gently push nearby idle items away so they
   // read as solid objects, not stacking stickers. Off in dev for exact placing.
@@ -403,47 +313,70 @@ export default function Day2() {
             rect,
           );
           changed = true;
+          repelSound();
         }
       }
       return changed ? next : prev;
     });
   }
+  function handleNextLevel(e: MouseEvent) {
+    e.preventDefault();
+    setFinished(true);
+    setStagePhase("exit");
+    setTimeout(() => navigate("/day3"), EXIT_MS);
+  }
+  // dev mode: add ?dev=1 to the URL for the tweak panel (live x/y, editable
+  // width, Copy button) with the hover-lock and repel disabled so items can
+  // be dragged to exact spots — e.g. to capture alternate valid layouts.
+  const [dev, setDev] = useState(false);
+  const [widths, setWidths] = useState<Record<string, number>>(() =>
+    Object.fromEntries(ITEMS.map((i) => [i.id, i.width])),
+  );
+  const [grabSound] = useSound(grabSfx);
+  const [dropSound] = useSound(dropSfx);
 
-  function shuffle() {
+  useEffect(() => {
+    setDev(new URLSearchParams(window.location.search).has("dev"));
+  }, []);
+
+  const isSolved = SOLUTIONS.some((board) =>
+    ITEMS.every((i) => {
+      const s = board[i.id];
+      return (
+        s &&
+        Math.abs(pos[i.id].left - s.left) < WIN_TOL &&
+        Math.abs(pos[i.id].top - s.top) < WIN_TOL
+      );
+    }),
+  );
+
+  function handleDragEnd(event: {
+    operation: {
+      source: { id: string | number } | null;
+      transform: { x: number; y: number };
+    };
+    canceled: boolean;
+  }) {
+    setDragActive(false);
+    const { operation, canceled } = event;
+    const source = operation.source;
     const rect = stageRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setFinished(false);
+    if (canceled || !source || !rect) return;
 
-    const area = (i: Item) => widths[i.id] * heightPct(i.id, rect);
-    const order = [...ITEMS].sort((a, b) => area(b) - area(a));
-    const placed: Box[] = [];
-    const next: Record<string, Pos> = {};
+    const id = String(source.id);
+    if (!ITEMS.some((i) => i.id === id)) return;
 
-    for (const item of order) {
-      const w = widths[item.id];
-      const h = heightPct(item.id, rect);
-      const bnd = screenBounds(w, h, rect);
-      let best: Pos | null = null;
-      let bestBox: Box | null = null;
-      let bestOverlap = Infinity;
-      for (let n = 0; n < SHUFFLE_TRIES; n++) {
-        const left = bnd.minLeft + Math.random() * (bnd.maxLeft - bnd.minLeft);
-        const top = bnd.minTop + Math.random() * (bnd.maxTop - bnd.minTop);
-        const box = contentPxBox(left, top, w, h, rect);
-        const ov = placed.reduce((m, p) => Math.max(m, overlapFrac(box, p)), 0);
-        if (ov < bestOverlap) {
-          best = { left, top };
-          bestBox = box;
-          bestOverlap = ov;
-        }
-        if (ov <= SHUFFLE_MAX_OVERLAP) break;
-      }
-      if (best && bestBox) {
-        placed.push(bestBox);
-        next[item.id] = best;
-      }
-    }
-    setPos(next);
+    setPos((prev) => {
+      // The transform here already reflects SnapToTarget's hover-lock, so
+      // releasing anywhere within the lock radius lands exactly on target.
+      const left = prev[id].left + (operation.transform.x / rect.width) * 100;
+      const top = prev[id].top + (operation.transform.y / rect.height) * 100;
+      return {
+        ...prev,
+        [id]: clampToScreen(left, top, widths[id], heightPct(id, rect), rect),
+      };
+    });
+    dropSound();
   }
 
   function snapFor(id: string): { dx: number; dy: number; tolerance: number } {
@@ -461,25 +394,6 @@ export default function Day2() {
   return (
     <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[url(/day2/bg.svg)] bg-cover">
       <BarBG />
-      {dev && (
-        <div className="absolute left-3 top-3 z-[60] flex gap-2">
-          <button
-            type="button"
-            onClick={shuffle}
-            className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
-          >
-            Shuffle
-          </button>
-          <button
-            type="button"
-            onClick={() => setPos(defaultPositions())}
-            className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
-          >
-            Reset
-          </button>
-        </div>
-      )}
-
       {isSolved && !finished && (
         <div className="day2-backdrop absolute inset-0 z-65 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
           <div
@@ -520,8 +434,6 @@ export default function Day2() {
         }`}
         style={{ width: "min(100dvw, 140.63vh)" }}
       >
-        {/* tabletop behind the tray */}
-
         {/* the tray itself */}
         <img
           src={asset("tray.png")}
@@ -566,7 +478,10 @@ export default function Day2() {
 
         {/* draggable items */}
         <DragDropProvider
-          onDragStart={() => setDragActive(true)}
+          onDragStart={() => {
+            setDragActive(true);
+            grabSound();
+          }}
           onDragMove={handleDragMove}
           onDragEnd={handleDragEnd}
         >
@@ -585,52 +500,6 @@ export default function Day2() {
           ))}
         </DragDropProvider>
       </div>
-
-      {dev && (
-        <div className="fixed right-2 top-2 z-[70] max-h-[96dvh] w-64 overflow-auto rounded-lg bg-black/75 p-2 font-mono text-[11px] leading-tight text-white shadow-xl backdrop-blur">
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="font-semibold text-emerald-300">
-              dev · drag to fit
-            </span>
-            <button
-              type="button"
-              onClick={copyValues}
-              className="rounded bg-emerald-500/80 px-2 py-0.5 font-semibold hover:bg-emerald-500"
-            >
-              Copy
-            </button>
-          </div>
-          {ITEMS.map((it) => (
-            <div
-              key={it.id}
-              className="mb-1 flex items-center gap-1.5 border-b border-white/10 pb-1"
-            >
-              <span className="w-20 shrink-0 truncate text-sky-300">
-                {it.id}
-              </span>
-              <span className="w-16 shrink-0 tabular-nums text-white/70">
-                {round(pos[it.id].left)},{round(pos[it.id].top)}
-              </span>
-              <label className="ml-auto flex items-center gap-1">
-                w
-                <input
-                  type="number"
-                  step={0.5}
-                  value={widths[it.id]}
-                  onChange={(e) =>
-                    setWidths((w) => ({
-                      ...w,
-                      [it.id]: Number(e.target.value),
-                    }))
-                  }
-                  className="w-14 rounded bg-white/10 px-1 py-0.5 text-white outline-none focus:bg-white/20"
-                />
-              </label>
-            </div>
-          ))}
-          <p className="mt-1 text-white/50">x,y = image corner (% of stage)</p>
-        </div>
-      )}
     </main>
   );
 }
