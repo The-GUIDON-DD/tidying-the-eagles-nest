@@ -11,7 +11,6 @@ import WinScreen from "~/components/WinScreen";
 import { printTimer } from "~/utils/utils";
 import dropSfx from "/sfx/drop.m4a?url";
 import grabSfx from "/sfx/grab.m4a?url";
-import repelSfx from "/sfx/repel1.m4a?url";
 import initialData from "./day2.initial.json";
 import solutionsData from "./day2.solutions.json";
 
@@ -273,7 +272,6 @@ function Game() {
   const [stagePhase, setStagePhase] = useState<"enter" | "idle" | "exit">(
     "enter",
   );
-  const [repelSound] = useSound(repelSfx);
   const { hours, minutes, seconds, pause } = useStopwatch({ autoStart: true });
   useEffect(() => {
     const t = setTimeout(() => setStagePhase("idle"), ENTER_MS);
@@ -320,17 +318,10 @@ function Game() {
             rect,
           );
           changed = true;
-          repelSound();
         }
       }
       return changed ? next : prev;
     });
-  }
-  function handleNextLevel(e: MouseEvent) {
-    e.preventDefault();
-    setFinished(true);
-    setStagePhase("exit");
-    setTimeout(() => navigate("/day3"), EXIT_MS);
   }
   // dev mode: add ?dev=1 to the URL for the tweak panel (live x/y, editable
   // width, Copy button) with the hover-lock and repel disabled so items can
