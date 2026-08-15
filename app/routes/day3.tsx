@@ -277,7 +277,7 @@ function DraggableItem({
   );
 }
 
-export default function Day3() {
+export function Game() {
   const stageRef = useRef<HTMLDivElement>(null);
   // Actual rendered <img> nodes, so item height can be read from the DOM
   // (real aspect ratio) instead of a hand-maintained ASPECT table.
@@ -534,5 +534,19 @@ export default function Day3() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function Day3() {
+  const [isIntroStage, setIsIntroStage] = useState(true);
+
+  return (
+    <>
+      {isIntroStage ? (
+        <IntroScreen onStart={() => setIsIntroStage(false)} />
+      ) : (
+        <Game />
+      )}
+    </>
   );
 }
