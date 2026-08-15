@@ -73,3 +73,16 @@ export function parseTranslate(translateString: string) {
 
   return { x, y };
 }
+
+function padNumber(n: number) {
+  if (n < 10) {
+    return `0${n}`;
+  } else return `${n}`;
+}
+
+export function printTimer(hours: number, minutes: number, seconds: number) {
+  if (hours > 0) {
+    return `${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}`;
+  }
+  return `${padNumber(minutes)}:${padNumber(seconds)}`;
+}

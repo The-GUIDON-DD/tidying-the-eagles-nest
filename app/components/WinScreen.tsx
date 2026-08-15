@@ -15,6 +15,7 @@ interface BGIndex {
 }
 const BGs: BGIndex = {
   1: "/day1/sharebg.png",
+  2: "/day2/sharebg.png",
 };
 
 const MAX_SCREEN_SIZE =
@@ -121,7 +122,13 @@ function BgBanner() {
   );
 }
 
-function WinPage1({ nextPage }: { nextPage: () => void }) {
+function WinPage1({
+  nextPage,
+  winText,
+}: {
+  nextPage: () => void;
+  winText: string;
+}) {
   const [winJingle] = useSound(winSound);
   const [popSfx] = useSound(uiPop);
   useEffect(() => {
@@ -171,10 +178,7 @@ function WinPage1({ nextPage }: { nextPage: () => void }) {
         className="h-[10vh] mt-[-9vh]"
       />
       <p className="font-display italic font-bold text-3xl text-white text-center w-[80%]">
-        Remember that one of the most telling marks of a true wanderer is having
-        everything they need within arm's reach. Good luck, and may the gear in
-        your satchel bring you to success! Don't celebrate just yet, though, for
-        there is one more trial you forgot to consider.
+        {winText}
       </p>
       <button
         type="button"
@@ -263,7 +267,7 @@ function WinPage2({
   return (
     <>
       {/* hidden share image to export to png */}
-      <div className="z-0 w-[439px]" id="resultsScreenshot">
+      <div className="z-0 w-[439px] translate-y-[200vh]" id="resultsScreenshot">
         {/* set to 30vw since I won't check font size... it's a bit lazy tbh */}
         <ShareImage bg={BGs[day]} width="105%" time={time} />
       </div>
@@ -309,13 +313,15 @@ function WinPage2({
 export default function WinScreen({
   day = 1,
   time,
+  winText,
 }: {
   day?: number;
   time: string;
+  winText: string;
 }) {
   const root = useRef(null);
   const pages = [
-    <WinPage1 key={0} nextPage={() => changePage(1)} />,
+    <WinPage1 key={0} winText={winText} nextPage={() => changePage(1)} />,
     <WinPage2 key={1} day={day} prevPage={() => changePage(0)} time={time} />,
   ];
   const [curPage, setPage] = useState(0);

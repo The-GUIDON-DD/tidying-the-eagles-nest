@@ -4,7 +4,6 @@ import { RestrictToHorizontalAxis } from "@dnd-kit/abstract/modifiers";
 import { Feedback } from "@dnd-kit/dom";
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
 import { useEffect, useState } from "react";
-import { BsArrowDownSquare, BsArrowUpSquare } from "react-icons/bs";
 import useSound from "use-sound";
 import dingclick from "/sfx/dingclick.m4a?url";
 import dragSfx from "/sfx/paper_drag1_fast.m4a?url";
@@ -59,9 +58,11 @@ function DraggableEnvelope({
 export default function IntroScreen({
   bg = "#bd5d44",
   onStart,
+  children,
 }: {
   bg?: string;
   onStart: () => void;
+  children: React.ReactNode;
 }) {
   const [envelopePos, setPosition] = useState({ x: 0, y: 0 });
   const [isOverSnapArea, setIsOverSnapArea] = useState(false);
@@ -139,18 +140,7 @@ export default function IntroScreen({
         <h1 className="font-display font-bold text-4xl text-purple">
           Hey there, wanderer!
         </h1>
-        <p className="font-serif text-center text-xl">
-          Before you know it, you'll be entering the Dreamlands. Organize these
-          items on your desk to ensure that you have everything you need for
-          your first day.
-        </p>
-        <p className="font-serif text-center text-xl">
-          To keep your space clean,{" "}
-          <strong className="font-black text-purple">click</strong> on an item
-          to focus it and press the <BsArrowUpSquare className="inline mr-1" />
-          <BsArrowDownSquare className="inline" /> keys to move it up and down
-          the stack.
-        </p>
+        {children}
         <button
           type="button"
           onClick={onStart}

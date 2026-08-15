@@ -1,0 +1,18 @@
+[
+  {
+    "soup": { "left": 14.65, "top": 21.88 },
+    "banana": { "left": 58.89, "top": 9.86 },
+    "coffee": { "left": 64.86, "top": 32.13 },
+    "cucumber-1": { "left": 35.49, "top": 38.38 },
+    "tomato-1": { "left": 34.86, "top": 43.55 },
+    "cucumber-2": { "left": 36.53, "top": 48.63 },
+    "tomato-2": { "left": 39.44, "top": 54.59 },
+    "cucumber-3": { "left": 42.43, "top": 57.32 },
+    "sauce": { "left": 41.39, "top": 44.43 },
+    "calamansi": { "left": 41.94, "top": 41.7 },
+    "calamansi-sliced": { "left": 45.0, "top": 51.86 },
+    "chili-a": { "left": 48.54, "top": 52.73 },
+    "chili-b": { "left": 48.68, "top": 58.5 },
+    "ice-cream": { "left": 18.47, "top": 51.95 }
+  }
+]
