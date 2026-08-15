@@ -2,8 +2,9 @@ import { configurator, Modifier } from "@dnd-kit/abstract";
 import { DragDropProvider, useDraggable } from "@dnd-kit/react";
 import type { MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import "./day2.css";
+import dayjs from "dayjs";
 import { useStopwatch } from "react-timer-hook";
 import useSound from "use-sound";
 import IntroScreen from "~/components/IntroScreen";
@@ -492,6 +493,12 @@ function Game() {
 
 export default function Day2() {
   const [isIntroStage, setIsIntroStage] = useState(true);
+  const unlockDate = dayjs("August 15, 2026, 7:00PM");
+  const now = dayjs();
+
+  if (now.isBefore(unlockDate)) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <>

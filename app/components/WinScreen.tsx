@@ -279,7 +279,7 @@ function WinPage2({
           type="button"
           onClick={() => {
             popSfx();
-            shareResult();
+            downloadImage();
           }}
           onMouseOver={() => popSfx()}
           className="flex font-display text-white text-2xl font-bold gap-2 items-center uppercase hover-button"
