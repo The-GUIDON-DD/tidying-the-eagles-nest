@@ -1,5 +1,12 @@
 import { DragDropProvider, useDraggable } from "@dnd-kit/react";
 import { useEffect, useRef, useState } from "react";
+import { useStopwatch } from "react-timer-hook";
+import useSound from "use-sound";
+import IntroScreen from "~/components/IntroScreen";
+import WinScreen from "~/components/WinScreen";
+import { printTimer } from "~/utils/utils";
+import dropSfx from "/sfx/drop.m4a?url";
+import grabSfx from "/sfx/grab.m4a?url";
 import solutionsData from "./day3.solutions.json";
 
 export function meta() {
@@ -85,7 +92,7 @@ const SNAP = 5; // % distance within which an item clicks into its home slot
 const WIN_TOL = 0.6; // % tolerance for the solved check
 
 const REPEL_RADIUS = 9; // % gap under which a nearby idle item gets nudged
-const REPEL_STRENGTH = 0.1; // nudge magnitude per % of overlap
+const REPEL_STRENGTH = 0; // nudge magnitude per % of overlap
 const REPEL_MAX = 0.4; // % cap on a single nudge step
 const LOCKER_X_SCALE = 24.722 / 23.333;
 
@@ -297,6 +304,10 @@ export function Game() {
   const [finished, setFinished] = useState(false); // win popup dismissed
   const [introFrame, setIntroFrame] = useState(0);
   const [introDone, setIntroDone] = useState(false);
+  const { hours, minutes, seconds, pause } = useStopwatch({ autoStart: true });
+  const [grabSound] = useSound(grabSfx);
+  const [dropSound] = useSound(dropSfx);
+
   useEffect(() => {
     [
       ...MIDDLE_LOCKER_FRAMES,
@@ -373,6 +384,7 @@ export function Game() {
         [id]: clampToScreen(left, top, item.width, heightPct(id, rect), rect),
       };
     });
+    dropSound();
   }
 
   // Magnetic repel: while dragging, gently push nearby idle items away so they
@@ -421,6 +433,11 @@ export function Game() {
     });
   }
 
+  function printGameTimer() {
+    pause();
+    return printTimer(hours, minutes, seconds);
+  }
+
   return (
     <main className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-[#7c62c6]">
       <div
@@ -435,27 +452,10 @@ export function Game() {
       />
 
       {playing && isSolved && !finished && (
-        <div className="day3-backdrop absolute inset-0 z-65 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
-          <div
-            className="day3-pop w-full max-w-xl bg-[#FFFBE6] px-8 py-8 text-center text-black shadow-2xl sm:px-12 sm:py-10"
-            style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
-          >
-            <h2 className="text-3xl font-extrabold sm:text-4xl">Excellent!</h2>
-            <p className="mt-5 text-base leading-8 sm:text-lg sm:leading-9">
-              Now with both a strong mind and enduring body, you are sure to win
-              against any physical trials fate puts in your way, be it long
-              E-Jeep queues, unexpected heavy lifting, multiple flights of
-              stairs, or the occasional run from Bellarmine to SEC Building.
-            </p>
-            <button
-              type="button"
-              onClick={() => setFinished(true)}
-              className="mt-8 rounded-xl bg-[#9d9d9d] px-10 py-3 text-lg transition hover:bg-[#8b8b8b]"
-            >
-              Finish
-            </button>
-          </div>
-        </div>
+        <WinScreen
+          winText="Excellent! Now with both a strong mind and enduring body, you are sure to win against any physical trials fate puts in your way—be it long E-Jeep queues, unexpected heavy lifting, multiple flights of stairs, or the occasional run from Bellarmine to SEC Building."
+          time={printGameTimer()}
+        />
       )}
 
       {/* Aspect-locked to the supplied 1440x1024 Day 3 artwork. */}
@@ -513,6 +513,7 @@ export function Game() {
             onDragStart={() => {
               setPlaying(true);
               setDragActive(true);
+              grabSound();
             }}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
@@ -543,7 +544,19 @@ export default function Day3() {
   return (
     <>
       {isIntroStage ? (
-        <IntroScreen onStart={() => setIsIntroStage(false)} />
+        <IntroScreen onStart={() => setIsIntroStage(false)}>
+          <p className="font-serif text-center text-xl">
+            It’s cloudy with a chance of intense drills, flexibility exercises,
+            and maybe a five-kilometer run. Remember that not all skills come
+            naturally, even to the best of wanderers. Organize your locker and
+            prepare to train with your mentor—it’s time for some Physical
+            Education!
+          </p>
+          <p className="font-serif text-center text-2xl">
+            <strong>Hint:</strong> Double-click on an item to{" "}
+            <strong className="font-black text-purple">rotate</strong> it.
+          </p>
+        </IntroScreen>
       ) : (
         <Game />
       )}
