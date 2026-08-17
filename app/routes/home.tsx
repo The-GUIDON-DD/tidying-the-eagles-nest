@@ -126,7 +126,7 @@ export default function Home() {
                 hoveredMenuItem === "" || hoveredMenuItem === "Play" ? 1 : 0.5,
             }}
             className="duration-500"
-            to="/day/1"
+            to="/day/3"
           >
             <p id="menu-play" className={`${TEXT_CLASS}`}>
               Play
