@@ -92,7 +92,7 @@ export default function LevelsScreen() {
       icon: "/levels/day3.svg",
       link: "/day/3",
       bgColor: "var(--color-deep-blue)",
-      unlockDate: dayjs("August 19, 2026"),
+      unlockDate: dayjs("August 17, 2026"),
     },
   ];
 
