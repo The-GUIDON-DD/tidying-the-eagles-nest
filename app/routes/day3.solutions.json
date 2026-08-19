@@ -1,0 +1,18 @@
+[
+  {
+    "towel": { "left": 53.119, "top": 30.371 },
+    "shirt-top": { "left": 41.125, "top": 42.48 },
+    "shirt-middle": { "left": 40.905, "top": 45.605 },
+    "shirt-bottom": { "left": 40.905, "top": 47.949 },
+    "sneaker-l": { "left": 41.493, "top": 34.961 },
+    "sneaker-r": { "left": 42.964, "top": 30.176 },
+    "bag": { "left": 42.449, "top": 15.625 },
+    "mat": { "left": 43.626, "top": 52.051 },
+    "arnis-l": { "left": 40.978, "top": 53.125 },
+    "arnis-r": { "left": 42.302, "top": 53.125 },
+    "racket": { "left": 52.162, "top": 53.613 },
+    "barbell": { "left": 48.777, "top": 53.32 },
+    "jug": { "left": 57.607, "top": 66.699 },
+    "kettlebell": { "left": 48.704, "top": 67.578 }
+  }
+]
